@@ -3,3 +3,9 @@
 ################################################################################
 
 /.vs
+/Signals/.vs/Signals/v16
+/Signals/ChartDirector/lib32
+/Signals/Signals/Debug
+/Signals/Signals/Release
+/Signals/Signals/x64
+/Signals/x64
