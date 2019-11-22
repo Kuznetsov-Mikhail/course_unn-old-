@@ -533,14 +533,15 @@ void CSignalsDlg::OnBnClickedButton2()
 		ResearchRrr.clear();
 		ResearchRrr2D.clear();
 		ResearchRrr2D.resize(sp.operating_frequencies.size());
+		#pragma omp parallel for
 		for (int i = 0; i < sp.operating_frequencies.size(); i++)
 		{
 			vector<float>buffer;
 			sp.Uncertainty_omp(buffer, sp.FHSS_Signals_initial_fl[i], sp.FHSS_Signals_fl[i], 4);
-			ResearchRrr.resize(buffer.size());
 			ResearchRrr2D[i]= buffer;
-			Prog_bar.SetPos(i+1);
+			//Prog_bar.SetPos(i+1);
 		}
+		ResearchRrr.resize(ResearchRrr2D[0].size());
 		for (int j = 0; j < sp.operating_frequencies.size(); j++)
 		{
 			for (int i = 0; i < ResearchRrr.size(); i++)

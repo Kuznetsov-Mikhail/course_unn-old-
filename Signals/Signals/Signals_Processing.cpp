@@ -322,7 +322,6 @@ void Signals_Processing::Uncertainty_omp(vector<double>& mass, vector<complex<do
 	}
 	double localMax;
 	int k = step2(Signal1.size());
-	mass.clear();
 	mass.resize(Signal1.size());
 	#pragma omp parallel for
 	for (int i = 0; i < Signal1.size(); i++)
