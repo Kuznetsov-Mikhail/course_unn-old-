@@ -54,10 +54,10 @@ BEGIN
     "\r\n"
     "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_RUS)\r\n"
     "LANGUAGE 25, 1\r\n"
-    "#include ""res\\Signals.rc2""  // РЎР‚Р ВµРЎРѓРЎС“РЎР‚РЎРѓРЎвЂ№, Р Р…Р Вµ РЎР‚Р ВµР Т‘Р В°Р С”РЎвЂљР С‘РЎР‚РЎС“Р ВµР СРЎвЂ№Р Вµ Р Р† Microsoft Visual C++\r\n"
-    "#include ""l.RUS\\afxres.rc""      // Р РЋРЎвЂљР В°Р Р…Р Т‘Р В°РЎР‚РЎвЂљР Р…РЎвЂ№Р Вµ Р С”Р С•Р СР С—Р С•Р Р…Р ВµР Р…РЎвЂљРЎвЂ№\r\n"
+    "#include ""res\\Signals.rc2""  // Р РЋР вЂљР В Р’ВµР РЋР С“Р РЋРЎвЂњР РЋР вЂљР РЋР С“Р РЋРІР‚в„–, Р В Р вЂ¦Р В Р’Вµ Р РЋР вЂљР В Р’ВµР В РўвЂР В Р’В°Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР РЋР вЂљР РЋРЎвЂњР В Р’ВµР В РЎВР РЋРІР‚в„–Р В Р’Вµ Р В Р вЂ  Microsoft Visual C++\r\n"
+    "#include ""l.RUS\\afxres.rc""      // Р В Р Р‹Р РЋРІР‚С™Р В Р’В°Р В Р вЂ¦Р В РўвЂР В Р’В°Р РЋР вЂљР РЋРІР‚С™Р В Р вЂ¦Р РЋРІР‚в„–Р В Р’Вµ Р В РЎвЂќР В РЎвЂўР В РЎВР В РЎвЂ”Р В РЎвЂўР В Р вЂ¦Р В Р’ВµР В Р вЂ¦Р РЋРІР‚С™Р РЋРІР‚в„–\r\n"
     "#if !defined(_AFXDLL)\r\n"
-    "#include ""l.RUS\\afxribbon.rc""   // Р вЂєР ВµР Р…РЎвЂљР В° MFC Р С‘ РЎР‚Р ВµРЎРѓРЎС“РЎР‚РЎРѓРЎвЂ№ Р С—Р В°Р Р…Р ВµР В»Р С‘ РЎС“Р С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…Р С‘РЎРЏ\r\n"
+    "#include ""l.RUS\\afxribbon.rc""   // Р В РІР‚С”Р В Р’ВµР В Р вЂ¦Р РЋРІР‚С™Р В Р’В° MFC Р В РЎвЂ Р РЋР вЂљР В Р’ВµР РЋР С“Р РЋРЎвЂњР РЋР вЂљР РЋР С“Р РЋРІР‚в„– Р В РЎвЂ”Р В Р’В°Р В Р вЂ¦Р В Р’ВµР В Р’В»Р В РЎвЂ Р РЋРЎвЂњР В РЎвЂ”Р РЋР вЂљР В Р’В°Р В Р вЂ Р В Р’В»Р В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋР РЏ\r\n"
     "#endif\r\n"
     "#endif\r\n"
     "\0"
@@ -98,7 +98,7 @@ BEGIN
     LTEXT           "Установить задержку(бит):",IDC_STATIC,646,67,93,8
     EDITTEXT        IDC_EDIT5,739,82,70,14,ES_AUTOHSCROLL | WS_DISABLED
     LTEXT           "Задержка(бит):",IDC_STATIC,686,84,53,8
-    CONTROL         "Сигналы/Спектры",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,736,191,76,10
+    CONTROL         "Сигналы/Спектры",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,736,145,76,10
     EDITTEXT        IDC_EDIT6,739,98,70,14,ES_AUTOHSCROLL
     LTEXT           "Уровень шума(дБ):",IDC_STATIC,674,100,65,8
     GROUPBOX        "Параметры сигналов",IDC_Box1,639,7,173,109
@@ -109,15 +109,16 @@ BEGIN
     LTEXT           "alfa:",IDC_STATIC,544,35,14,8
     CONTROL         "Вкл/Выкл",IDC_CHECK2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,562,49,47,10
     CONTROL         "",IDC_SIGNAL2,"Static",SS_BITMAP,7,122,13,11
-    PUSHBUTTON      "Функция неопределённости для ППРЧ сигналов",IDC_BUTTON2,726,273,85,35,BS_MULTILINE
+    PUSHBUTTON      "Функция неопределённости для ППРЧ сигналов",IDC_BUTTON2,726,227,85,35,BS_MULTILINE
     CONTROL         "",IDC_SIGNAL3,"Static",SS_BITMAP,7,237,13,11
-    PUSHBUTTON      "Генерация сигналов",IDC_BUTTON1,727,166,85,21
-    PUSHBUTTON      "Функция неопределённости",IDC_BUTTON3,727,204,85,23,BS_MULTILINE
+    PUSHBUTTON      "Генерация сигналов",IDC_BUTTON1,727,120,85,21
+    PUSHBUTTON      "Функция неопределённости",IDC_BUTTON3,727,158,85,23,BS_MULTILINE
     CONTROL         "scramble",IDC_CHECK3,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,647,19,46,10
-    CONTROL         "Parallel",IDC_CHECK4,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,683,285,40,10
-    CONTROL         "",IDC_PROGRESS1,"msctls_progress32",WS_BORDER,726,310,85,14
-    PUSHBUTTON      "Генерация фильтров",IDC_BUTTON4,725,254,86,14
-    PUSHBUTTON      "Функция неопределённости OMP",IDC_BUTTON5,727,230,85,23,BS_MULTILINE
+    CONTROL         "Parallel",IDC_CHECK4,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,683,239,40,10
+    CONTROL         "",IDC_PROGRESS1,"msctls_progress32",WS_BORDER,726,264,85,14
+    PUSHBUTTON      "Генерация фильтров",IDC_BUTTON4,725,208,86,14
+    PUSHBUTTON      "Функция неопределённости OMP",IDC_BUTTON5,727,184,85,23,BS_MULTILINE
+    PUSHBUTTON      "Исследование",IDC_BUTTON6,726,280,85,23
 END
 
 
@@ -206,10 +207,10 @@ END
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_RUS)
 LANGUAGE 25, 1
-#include "res\Signals.rc2"  // РЎР‚Р ВµРЎРѓРЎС“РЎР‚РЎРѓРЎвЂ№, Р Р…Р Вµ РЎР‚Р ВµР Т‘Р В°Р С”РЎвЂљР С‘РЎР‚РЎС“Р ВµР СРЎвЂ№Р Вµ Р Р† Microsoft Visual C++
-#include "l.RUS\afxres.rc"      // Р РЋРЎвЂљР В°Р Р…Р Т‘Р В°РЎР‚РЎвЂљР Р…РЎвЂ№Р Вµ Р С”Р С•Р СР С—Р С•Р Р…Р ВµР Р…РЎвЂљРЎвЂ№
+#include "res\Signals.rc2"  // Р РЋР вЂљР В Р’ВµР РЋР С“Р РЋРЎвЂњР РЋР вЂљР РЋР С“Р РЋРІР‚в„–, Р В Р вЂ¦Р В Р’Вµ Р РЋР вЂљР В Р’ВµР В РўвЂР В Р’В°Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР РЋР вЂљР РЋРЎвЂњР В Р’ВµР В РЎВР РЋРІР‚в„–Р В Р’Вµ Р В Р вЂ  Microsoft Visual C++
+#include "l.RUS\afxres.rc"      // Р В Р Р‹Р РЋРІР‚С™Р В Р’В°Р В Р вЂ¦Р В РўвЂР В Р’В°Р РЋР вЂљР РЋРІР‚С™Р В Р вЂ¦Р РЋРІР‚в„–Р В Р’Вµ Р В РЎвЂќР В РЎвЂўР В РЎВР В РЎвЂ”Р В РЎвЂўР В Р вЂ¦Р В Р’ВµР В Р вЂ¦Р РЋРІР‚С™Р РЋРІР‚в„–
 #if !defined(_AFXDLL)
-#include "l.RUS\afxribbon.rc"   // Р вЂєР ВµР Р…РЎвЂљР В° MFC Р С‘ РЎР‚Р ВµРЎРѓРЎС“РЎР‚РЎРѓРЎвЂ№ Р С—Р В°Р Р…Р ВµР В»Р С‘ РЎС“Р С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…Р С‘РЎРЏ
+#include "l.RUS\afxribbon.rc"   // Р В РІР‚С”Р В Р’ВµР В Р вЂ¦Р РЋРІР‚С™Р В Р’В° MFC Р В РЎвЂ Р РЋР вЂљР В Р’ВµР РЋР С“Р РЋРЎвЂњР РЋР вЂљР РЋР С“Р РЋРІР‚в„– Р В РЎвЂ”Р В Р’В°Р В Р вЂ¦Р В Р’ВµР В Р’В»Р В РЎвЂ Р РЋРЎвЂњР В РЎвЂ”Р РЋР вЂљР В Р’В°Р В Р вЂ Р В Р’В»Р В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋР РЏ
 #endif
 #endif
 

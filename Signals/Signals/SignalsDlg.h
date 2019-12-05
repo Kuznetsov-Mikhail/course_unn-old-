@@ -43,6 +43,7 @@ public:
 	void ViewerDraw(vector<complex<double>>& data, int Xmax, CChartViewer& viewer_num);
 	void ViewerDrawSpectrum(vector<double>& data, int Xmax, CChartViewer& viewer_num);
 	void ViewerDraw(vector<double>& data, int Xmax, CChartViewer& viewer_num);
+	void ViewerDraw(vector<double>& data, int Xmax, CChartViewer& viewer_num, string PathPic);
 	afx_msg void OnBnClickedCancel();
 	double bitrate;
 	double sampling;
@@ -76,4 +77,19 @@ public:
 	CProgressCtrl Prog_bar;
 	afx_msg void OnBnClickedButton4();
 	afx_msg void OnBnClickedButton5();
+	afx_msg void OnBnClickedButton6();
+	////////////////////////////////////////////
+	/*template <class T>
+	bool convertFromStr(string& str, T* var) {
+		istringstream ss(str);
+		return (ss >> *var);
+	}*/
+
+	template <class T>
+	string convertToStrPng(T* var) {
+		ostringstream ss;
+		ss << *var;
+		ss << ".png";
+		return ss.str();
+	}
 };
