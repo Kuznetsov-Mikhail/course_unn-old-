@@ -54,6 +54,7 @@ void CSignalsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_CHECK3, scramble);
 	DDX_Check(pDX, IDC_CHECK4, parallel);
 	DDX_Control(pDX, IDC_PROGRESS1, Prog_bar);
+	DDX_Control(pDX, IDC_PROGRESS2, ProgBarRes);
 }
 
 BEGIN_MESSAGE_MAP(CSignalsDlg, CDialogEx)
@@ -305,19 +306,14 @@ void CSignalsDlg::ViewerDraw(vector<double>& data, int Xmax, CChartViewer& viewe
 	viewer_num.setChart(c);
 	delete c;
 }
-void CSignalsDlg::ViewerDraw(vector<double>& data, int Xmax, CChartViewer& viewer_num,string PathPic)
+void CSignalsDlg::ViewerDraw(vector<double>& data, double Xmin, double Xmax, CChartViewer& viewer_num, string PathPic)
 {
 	// In this example, we simply use random data for the 3 data series.
 	DoubleArray Arr_dataReal = vectorToArray(data);
 	vector<double>Datatime;
-	int bits = 1;
-	double step = 1;
-	if (data.size() != 0)
-	{
-		bits = data.size() / sp.bit_time;
-		step = (double)bits / data.size();
-	}
-	for (int i = 0; i < Xmax; i++)Datatime.push_back(i * step);
+
+	double OXstep = (Xmax - Xmin) / (data.size()-1);
+	for (double i = Xmin; i <= Xmax; i+= OXstep)Datatime.push_back(i);
 	DoubleArray timeStamps = vectorToArray(Datatime);
 
 	// Create a XYChart object of size 600 x 400 pixels
@@ -478,11 +474,7 @@ void CSignalsDlg::OnBnClickedButton5() //Функция Uncertainty OMP
 		}
 	}
 	delay_lama = int((double)delay_lama / sp.bit_time);
-	//ViewerDraw(ResearchRrr, ResearchRrr.size(), viewer3);
-	double test_pic = 1.2345;
-	string str = convertToStrPng<double>(&test_pic);
-	ViewerDraw(ResearchRrr, ResearchRrr.size(), viewer3, str);
-	
+	ViewerDraw(ResearchRrr, ResearchRrr.size(), viewer3);	
 	SetCursor(LoadCursor(nullptr, IDC_ARROW));
 	UpdateData(FALSE);
 }
@@ -508,10 +500,12 @@ void CSignalsDlg::OnBnClickedButton4() //Генератор фильтров
 	SetCursor(LoadCursor(nullptr, IDC_ARROW));
 	UpdateData(FALSE);
 }
-void CSignalsDlg::OnBnClickedButton2()
+void CSignalsDlg::OnBnClickedButton2() //ФН для ППРЧ сигналов
 {
 	UpdateData(TRUE);
 	SetCursor(LoadCursor(nullptr, IDC_WAIT));
+	Prog_bar.SetRange(0, 50);
+	Prog_bar.SetPos(0);
 	updateSP();
 	if (!parallel)
 	{		
@@ -638,38 +632,109 @@ void CSignalsDlg::OnBnClickedButton2()
 
 void CSignalsDlg::OnBnClickedButton6()//Исследование
 {
-	double noize_min_r = 0;
+	UpdateData(1);
+	SetCursor(LoadCursor(nullptr, IDC_WAIT));
+	double noize_min_r = -20;
 	double noize_max_r = 10;
 	int noize_dots_r = 5;
 	double noize_step_r = (noize_max_r - noize_min_r) / noize_dots_r;
-	for (int i = 0; i < noize_step_r; i++)
+	vector<double> assessments;
+	assessments.resize(noize_dots_r+1);
+	int runs = 10; //кол-во прогонов для одной велечины шума
+
+	Prog_bar.SetRange(0, runs);
+	Prog_bar.SetPos(0);
+	ProgBarRes.SetRange(0, noize_dots_r);
+	ProgBarRes.SetPos(0);
+	for (int i = 0; i < noize_dots_r+1; i++)
 	{
 		double noize_r = noize_min_r + i * noize_step_r;
-		/////////////////////////////////////////////////
-		SetCursor(LoadCursor(nullptr, IDC_WAIT));
-		updateSP();
-		ResearchRrr.resize(0);
-		ImSpectr1.clear();
-		ImSpectr2.clear();
-
-		sp.Link16_Signals_Generator(ImSignal1, ImSignal2, bits_size, delay_size, scramble);
-		ImSignal2Rch.clear();
-		ImSignal2Rch = ImSignal2;
-
-		if (Dopler_On)
+		for (int j = 0; j < runs; j++)
 		{
-			sp.Dopler_scaling(ImSignal2, alfa);
-			sp.Dopler_shift(ImSignal2, f_dop);
-		}
-		sp.addNoize(ImSignal2, noize_r);
-		sp.FAST_FUR(ImSignal1, ImSpectr1, -1);
-		sp.FAST_FUR(ImSignal2, ImSpectr2, -1);
-		sp.spVertex(ImSpectr1);
-		sp.spVertex(ImSpectr2);
-		OnBnClickedCheck1();
-		SetCursor(LoadCursor(nullptr, IDC_ARROW));
-		
-		/////////////////////////////////////////////////
-	}
+			/////////////////////////////////////////////////Генерация новых сигналов для итерации исследования			
+			updateSP();
+			ResearchRrr.resize(0);
+			ImSpectr1.clear();
+			ImSpectr2.clear();
 
+			sp.Link16_Signals_Generator(ImSignal1, ImSignal2, bits_size, delay_size, scramble);
+			ImSignal2Rch.clear();
+			ImSignal2Rch = ImSignal2;
+
+			if (Dopler_On)
+			{
+				sp.Dopler_scaling(ImSignal2, alfa);
+				sp.Dopler_shift(ImSignal2, f_dop);
+			}
+			sp.addNoize(ImSignal2, noize_r);
+			sp.FAST_FUR(ImSignal1, ImSpectr1, -1);
+			sp.FAST_FUR(ImSignal2, ImSpectr2, -1);
+			sp.spVertex(ImSpectr1);
+			sp.spVertex(ImSpectr2);
+			/////////////////////////////////////////////////
+			//////////////////// Подготовка входных сигналов
+			signal_buf signal1;
+			signal_buf signal2;
+			for (int i = 0; i < ImSignal1.size(); i++)
+			{
+				complex<float> buf; buf = ImSignal1[i].real() + Comj * ImSignal1[i].imag();
+				signal1.push_back(buf);
+			}
+			for (int i = 0; i < ImSignal2.size(); i++)
+			{
+				complex<float> buf; buf = ImSignal2[i].real() + Comj * ImSignal2[i].imag();
+				signal2.push_back(buf);
+			}
+			//////////////////// fast_convolution
+			fast_convolution(signal1, sp.fir_s, sp.FHSS_Signals_initial_fl, GPU_FD);
+			Prog_bar.SetPos(25);
+			fast_convolution(signal2, sp.fir_s, sp.FHSS_Signals_fl, GPU_FD);
+			Prog_bar.SetPos(50);
+			ResearchRrr.clear();
+			ResearchRrr2D.clear();
+			ResearchRrr2D.resize(sp.operating_frequencies.size());
+#pragma omp parallel for
+			for (int i = 0; i < sp.operating_frequencies.size(); i++)
+			{
+				vector<float>buffer;
+				sp.Uncertainty_omp(buffer, sp.FHSS_Signals_initial_fl[i], sp.FHSS_Signals_fl[i], 4);
+				ResearchRrr2D[i] = buffer;
+			}
+			ResearchRrr.resize(ResearchRrr2D[0].size());
+			for (int j = 0; j < sp.operating_frequencies.size(); j++)
+			{
+				for (int i = 0; i < ResearchRrr.size(); i++)
+				{
+					ResearchRrr[i] += ResearchRrr2D[j][i];
+				}
+			}
+			if (ResearchRrr.size() != NULL)
+			{
+				double buff_ResearchRrr = 0;
+				for (int i = 0; i < ResearchRrr.size(); i++)
+				{
+					if (ResearchRrr[i] > buff_ResearchRrr)
+					{
+						buff_ResearchRrr = ResearchRrr[i]; delay_lama = i;
+					}
+				}
+			}
+			delay_lama_r= delay_lama;
+			delay_lama = int((double)delay_lama / sp.bit_time);
+			sp.FHSS_Signals_initial_fl.clear();
+			sp.FHSS_Signals_fl.clear();
+			ViewerDraw(ResearchRrr, ResearchRrr.size(), viewer3);
+			/////////////////////////////////////////////////
+			double expected_delay = delay_size * sp.bit_time;
+			assessments[i] += pow((expected_delay - delay_lama_r), 2);
+			Prog_bar.SetPos(j+1);
+		}
+		assessments[i] /= runs;
+		ProgBarRes.SetPos(i+1);
+	}
+	//double test_pic = 1.2345;
+	//string str = convertToStrPng<double>(&test_pic);
+	ViewerDraw(assessments, noize_min_r, noize_max_r, viewer3, "assessments.png");
+	SetCursor(LoadCursor(nullptr, IDC_ARROW));
+	UpdateData(0);
 }

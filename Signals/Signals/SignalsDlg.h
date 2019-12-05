@@ -43,7 +43,7 @@ public:
 	void ViewerDraw(vector<complex<double>>& data, int Xmax, CChartViewer& viewer_num);
 	void ViewerDrawSpectrum(vector<double>& data, int Xmax, CChartViewer& viewer_num);
 	void ViewerDraw(vector<double>& data, int Xmax, CChartViewer& viewer_num);
-	void ViewerDraw(vector<double>& data, int Xmax, CChartViewer& viewer_num, string PathPic);
+	void ViewerDraw(vector<double>& data, double Xmin, double Xmax, CChartViewer& viewer_num, string PathPic);
 	afx_msg void OnBnClickedCancel();
 	double bitrate;
 	double sampling;
@@ -75,6 +75,7 @@ public:
 	////////////////////////// fast convolution
 	BOOL parallel;
 	CProgressCtrl Prog_bar;
+	CProgressCtrl ProgBarRes;
 	afx_msg void OnBnClickedButton4();
 	afx_msg void OnBnClickedButton5();
 	afx_msg void OnBnClickedButton6();
@@ -92,4 +93,6 @@ public:
 		ss << ".png";
 		return ss.str();
 	}
+	int delay_lama_r;
+	
 };

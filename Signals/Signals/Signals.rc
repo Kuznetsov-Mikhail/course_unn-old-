@@ -118,7 +118,8 @@ BEGIN
     CONTROL         "",IDC_PROGRESS1,"msctls_progress32",WS_BORDER,726,264,85,14
     PUSHBUTTON      "Генерация фильтров",IDC_BUTTON4,725,208,86,14
     PUSHBUTTON      "Функция неопределённости OMP",IDC_BUTTON5,727,184,85,23,BS_MULTILINE
-    PUSHBUTTON      "Исследование",IDC_BUTTON6,726,280,85,23
+    PUSHBUTTON      "Исследование",IDC_BUTTON6,727,298,85,28
+    CONTROL         "",IDC_PROGRESS2,"msctls_progress32",WS_BORDER,727,281,85,14
 END
 
 

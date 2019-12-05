@@ -28,6 +28,7 @@
 #define IDC_BUTTON4                     1021
 #define IDC_BUTTON5                     1022
 #define IDC_BUTTON6                     1023
+#define IDC_PROGRESS2                   1024
 
 // Next default values for new objects
 // 
