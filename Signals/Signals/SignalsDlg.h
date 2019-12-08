@@ -7,6 +7,7 @@
 #include <math.h>
 #include "Signals_Processing.h"
 #include "ChartViewer.h"
+#include <fstream>
 using namespace std;
 
 // Диалоговое окно CSignalsDlg
@@ -65,6 +66,7 @@ public:
 	vector <double> Rrr;
 	vector <double> ResearchRrr;
 	vector <vector<float>> ResearchRrr2D;
+	vector <pair<double,double>> veroiatnosti;
 	double f_dop;
 	double alfa;
 	BOOL Dopler_On;
@@ -94,5 +96,28 @@ public:
 		return ss.str();
 	}
 	int delay_lama_r;
-	
+	bool vectorDoubleToFile(const vector <pair <double, double> >& points, const string& file)
+	{
+		if (points.empty())
+			return false;
+
+		vector <pair <double, double> >::const_iterator i;
+
+		if (file != "")
+		{
+			ofstream out(file.c_str());
+			if (out.fail())
+			{
+				out.close();
+				return false;
+			}
+			for (i = points.begin(); i != points.end(); ++i)
+			{
+				out << i->first << "dB: " << i->second <<"%"<< "\n";
+			}
+
+			out.close();
+		}
+		return true;
+	}
 };

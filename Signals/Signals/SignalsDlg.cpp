@@ -634,12 +634,14 @@ void CSignalsDlg::OnBnClickedButton6()//Исследование
 {
 	UpdateData(1);
 	SetCursor(LoadCursor(nullptr, IDC_WAIT));
+	veroiatnosti.clear();
 	double noize_min_r = -20;
 	double noize_max_r = 10;
 	int noize_dots_r = 5;
 	double noize_step_r = (noize_max_r - noize_min_r) / noize_dots_r;
 	vector<double> assessments;
 	assessments.resize(noize_dots_r+1);
+	veroiatnosti.resize(noize_dots_r + 1);
 	int runs = 10; //кол-во прогонов для одной велечины шума
 
 	Prog_bar.SetRange(0, runs);
@@ -727,14 +729,20 @@ void CSignalsDlg::OnBnClickedButton6()//Исследование
 			/////////////////////////////////////////////////
 			double expected_delay = delay_size * sp.bit_time;
 			assessments[i] += pow((expected_delay - delay_lama_r), 2);
+			/////////////////////////////////////////////////
+			double deltadelay = abs(expected_delay - delay_lama_r);
+			if (deltadelay < (double(sp.bit_time) / 2)) veroiatnosti[i].second += 1;
 			Prog_bar.SetPos(j+1);
 		}
 		assessments[i] /= runs;
+		veroiatnosti[i].second /= runs;
+		veroiatnosti[i].first = noize_r;
 		ProgBarRes.SetPos(i+1);
 	}
 	//double test_pic = 1.2345;
 	//string str = convertToStrPng<double>(&test_pic);
 	ViewerDraw(assessments, noize_min_r, noize_max_r, viewer3, "assessments.png");
+	vectorDoubleToFile(veroiatnosti, "veroiatnosti.txt");
 	SetCursor(LoadCursor(nullptr, IDC_ARROW));
 	UpdateData(0);
 }
