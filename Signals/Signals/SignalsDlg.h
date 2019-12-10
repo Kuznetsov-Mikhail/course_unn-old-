@@ -113,7 +113,7 @@ public:
 			}
 			for (i = points.begin(); i != points.end(); ++i)
 			{
-				out << i->first << "dB: " << i->second <<"%"<< "\n";
+				out << i->first << "dB: " << (i->second)*100 <<"%"<< "\n";
 			}
 
 			out.close();

@@ -635,20 +635,20 @@ void CSignalsDlg::OnBnClickedButton6()//Исследование
 	UpdateData(1);
 	SetCursor(LoadCursor(nullptr, IDC_WAIT));
 	veroiatnosti.clear();
-	double noize_min_r = -20;
+	double noize_min_r = -30;
 	double noize_max_r = 10;
 	int noize_dots_r = 5;
-	double noize_step_r = (noize_max_r - noize_min_r) / noize_dots_r;
+	double noize_step_r = (noize_max_r - noize_min_r) / (noize_dots_r-1);
 	vector<double> assessments;
-	assessments.resize(noize_dots_r+1);
-	veroiatnosti.resize(noize_dots_r + 1);
+	assessments.resize(noize_dots_r);
+	veroiatnosti.resize(noize_dots_r);
 	int runs = 10; //кол-во прогонов для одной велечины шума
 
 	Prog_bar.SetRange(0, runs);
 	Prog_bar.SetPos(0);
-	ProgBarRes.SetRange(0, noize_dots_r);
+	ProgBarRes.SetRange(0, noize_dots_r-1);
 	ProgBarRes.SetPos(0);
-	for (int i = 0; i < noize_dots_r+1; i++)
+	for (int i = 0; i < noize_dots_r; i++)
 	{
 		double noize_r = noize_min_r + i * noize_step_r;
 		for (int j = 0; j < runs; j++)
@@ -743,6 +743,12 @@ void CSignalsDlg::OnBnClickedButton6()//Исследование
 	//string str = convertToStrPng<double>(&test_pic);
 	ViewerDraw(assessments, noize_min_r, noize_max_r, viewer3, "assessments.png");
 	vectorDoubleToFile(veroiatnosti, "veroiatnosti.txt");
+	vector<double> veroiatnosti_help;
+	for (int i=0;i<veroiatnosti.size();i++)
+	{
+		veroiatnosti_help.push_back(veroiatnosti[i].second);
+	}
+	ViewerDraw(veroiatnosti_help, noize_min_r, noize_max_r, viewer3, "veroiatnosti.png");
 	SetCursor(LoadCursor(nullptr, IDC_ARROW));
 	UpdateData(0);
 }
