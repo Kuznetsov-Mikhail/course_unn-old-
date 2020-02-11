@@ -386,6 +386,7 @@ void CSignalsDlg::OnBnClickedButton1() //Генерация сигналов
 	ImSpectr2.clear();
 
 	sp.Link16_Signals_Generator(ImSignal1, ImSignal2, bits_size, delay_size, scramble);
+	//sp.Simple_Signals_Generator(ImSignal1, ImSignal2, bits_size, delay_size);
 	ImSignal2Rch.clear();
 	ImSignal2Rch = ImSignal2;
 
@@ -598,7 +599,7 @@ void CSignalsDlg::OnBnClickedButton2() //ФН для ППРЧ сигналов
 		for (int i = 0; i < sp.operating_frequencies.size(); i++)
 		{
 			vector<float>buffer;
-			sp.Uncertainty_omp(buffer, sp.FHSS_Signals_initial_fl[i], sp.FHSS_Signals_fl[i], 4);
+			sp.Uncertainty_omp(buffer, sp.FHSS_Signals_initial_fl[i], sp.FHSS_Signals_fl[i], 16);
 			ResearchRrr2D[i]= buffer;
 			//Prog_bar.SetPos(i+1);
 		}
@@ -636,7 +637,7 @@ void CSignalsDlg::OnBnClickedButton6()//Исследование
 	SetCursor(LoadCursor(nullptr, IDC_WAIT));
 	veroiatnosti.clear();
 	double noize_min_r = -30;
-	double noize_max_r = 10;
+	double noize_max_r = -20;
 	int noize_dots_r = 5;
 	double noize_step_r = (noize_max_r - noize_min_r) / (noize_dots_r-1);
 	vector<double> assessments;

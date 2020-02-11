@@ -49,11 +49,6 @@ public:
 	*param samp - частота дескретизации сигнала
 	*/
 	void Dopler_shift(vector<complex<double>>& mass, double PhiDopler);
-	void fur(vector <complex<double>>& data, int is);//чистый фурье
-	void FAST_FUR(vector <complex<double>> Signal, vector <complex<double>>& Spectr,bool is);
-	void spVertex(vector <complex<double>>& Spectr);
-	double Max(vector<double> Mass);
-	double Min(vector<double> Mass);
 	/**
 	‘ункци€ ƒоплеровского масштобировани€
 	*param Signal
@@ -61,7 +56,14 @@ public:
 	*/
 	void Dopler_scaling(vector <complex<double>>& Signal, double koeff);
 	void InterSpline(vector<double> Signal, vector<double>& NewSignal, double step);//интерпол€ци€ сплайном
-	void Linear_interpolation(vector<double>& Old_Data, vector<double>& New_Data,double step);
+	void Linear_interpolation(vector<double>& Old_Data, vector<double>& New_Data, double step);//линейна€ интерпол€ци€
+
+	void fur(vector <complex<double>>& data, int is);//чистый фурье
+	void FAST_FUR(vector <complex<double>> Signal, vector <complex<double>>& Spectr,bool is);
+	void spVertex(vector <complex<double>>& Spectr);
+	double Max(vector<double> Mass);
+	double Min(vector<double> Mass);	
+
 	double spline(vector<double>massx, vector<double>massy, vector<double>mit, int i, double h, double x) //интерпол€ционна€ формула
 	{
 		double s = ((massx[i + 1] - x) * (massx[i + 1] - x) * (2 * (x - massx[i]) + h) * massy[i]) / (h * h * h) + ((x - massx[i]) *
@@ -89,6 +91,7 @@ public:
 	*param speed - скорость объекта
 	*/
 	void Link16_Signals_Generator(vector <complex<double>>& Signal1, vector <complex<double>>& Signal2, int signal1Size, int delaySize,bool scramble);
+	void Simple_Signals_Generator(vector <complex<double>>& Signal1, vector <complex<double>>& Signal2, int signal1Size, int delaySize);
 	/**
 	*ѕеременные дл€ функции неопределЄнности дл€ сигналов с широким спектром
 	*/

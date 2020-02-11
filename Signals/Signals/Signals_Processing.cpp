@@ -1,9 +1,15 @@
-#include "pch.h"
+п»ї#include "pch.h"
 #include "Signals_Processing.h"
 
 
 Signals_Processing::Signals_Processing()
 {
+	Buffaza = 0;
+	V = 0;
+	delataW = 0;
+	sampling = 0;
+	BrV = 0;
+	bit_time = 0;
 }
 Signals_Processing::~Signals_Processing()
 {
@@ -139,7 +145,7 @@ void Signals_Processing::SignalFill(vector<complex<double>>& mass, vector<bool> 
 	if (type)
 	{
 		for (int i = 0; i < data.size(); i++)
-		{//частотная
+		{//С‡Р°СЃС‚РѕС‚РЅР°СЏ
 			if (data[i])
 			{
 				Buffaza += 2 * M_PI * (delataW) / sampling;
@@ -155,7 +161,7 @@ void Signals_Processing::SignalFill(vector<complex<double>>& mass, vector<bool> 
 		}
 	}
 	else
-	{//фазовая
+	{//С„Р°Р·РѕРІР°СЏ
 		for (int i = 0; i < data.size(); i++)
 		{
 			Buffaza = M_PI * data[i];
@@ -277,8 +283,8 @@ void Signals_Processing::Uncertainty(vector<double>& mass, vector<complex<double
 		ksum = 1;
 	}
 	double localMax;
-	vector <complex<double>> Rrr; //вектор произведения С1 и С2
-	vector <complex<double>> RrrK;// суммирование Rrr по блокам ksum
+	vector <complex<double>> Rrr; //РІРµРєС‚РѕСЂ РїСЂРѕРёР·РІРµРґРµРЅРёСЏ РЎ1 Рё РЎ2
+	vector <complex<double>> RrrK;// СЃСѓРјРјРёСЂРѕРІР°РЅРёРµ Rrr РїРѕ Р±Р»РѕРєР°Рј ksum
 	int k = step2(Signal1.size());
 	mass.resize(0);
 
@@ -323,14 +329,15 @@ void Signals_Processing::Uncertainty_omp(vector<double>& mass, vector<complex<do
 	double localMax;
 	int k = step2(Signal1.size());
 	mass.resize(Signal1.size());
-	#pragma omp parallel for
+
+#pragma omp parallel for
 	for (int i = 0; i < Signal1.size(); i++)
 	{
-		vector <complex<double>> Rrr; //вектор произведения С1 и С2		
-		vector <complex<double>> RrrK;// суммирование Rrr по блокам ksum
+		vector <complex<double>> Rrr; //РІРµРєС‚РѕСЂ РїСЂРѕРёР·РІРµРґРµРЅРёСЏ РЎ1 Рё РЎ2		
+		vector <complex<double>> RrrK;// СЃСѓРјРјРёСЂРѕРІР°РЅРёРµ Rrr РїРѕ Р±Р»РѕРєР°Рј ksum
 		Rrr.clear();
 		Rrr.resize(k);
-		#pragma omp parallel for
+#pragma omp parallel for
 		for (int j = 0; j < Signal1.size(); j++)
 		{
 			if ((i + j) == Signal2.size())
@@ -342,7 +349,7 @@ void Signals_Processing::Uncertainty_omp(vector<double>& mass, vector<complex<do
 		int group = k / ksum;
 		RrrK.clear();
 		RrrK.resize(group);
-		#pragma omp parallel for
+#pragma omp parallel for
 		for (int j = 0; j < group; j++)
 		{
 			complex <double> bufferSum = 0;
@@ -373,8 +380,8 @@ void Signals_Processing::Uncertainty_omp(vector<float>& mass, signal_buf& Signal
 #pragma omp parallel for
 	for (int i = 0; i < Signal1.size(); i++)
 	{
-		vector <complex<float>> Rrr; //вектор произведения С1 и С2		
-		vector <complex<double>> RrrK;// суммирование Rrr по блокам ksum
+		vector <complex<float>> Rrr; //РІРµРєС‚РѕСЂ РїСЂРѕРёР·РІРµРґРµРЅРёСЏ РЎ1 Рё РЎ2		
+		vector <complex<double>> RrrK;// СЃСѓРјРјРёСЂРѕРІР°РЅРёРµ Rrr РїРѕ Р±Р»РѕРєР°Рј ksum
 		Rrr.clear();
 		Rrr.resize(k);
 #pragma omp parallel for
@@ -416,8 +423,8 @@ void Signals_Processing::Uncertainty(vector<float>& mass, signal_buf& Signal1, s
 	}
 
 	float localMax;
-	vector <complex<float>> Rrr; //вектор произведения С1 и С2
-	vector <complex<double>> RrrK;// суммирование Rrr по блокам ksum
+	vector <complex<float>> Rrr; //РІРµРєС‚РѕСЂ РїСЂРѕРёР·РІРµРґРµРЅРёСЏ РЎ1 Рё РЎ2
+	vector <complex<double>> RrrK;// СЃСѓРјРјРёСЂРѕРІР°РЅРёРµ Rrr РїРѕ Р±Р»РѕРєР°Рј ksum
 	int k = step2(Signal1.size());
 	mass.resize(0);
 	for (int i = 0; i < Signal1.size(); i++)
@@ -560,10 +567,10 @@ int Signals_Processing::step2(int sizein)
 		else break;
 	}
 	return pow(2, i);
-} 
+}
 void Signals_Processing::Dopler_scaling(vector <complex<double>>& Signal, double koeff)
 {
-	double speedC = 299792458; //м.с.
+	double speedC = 299792458; //Рј.СЃ.
 	vector <complex<double>> BufSignal = Signal;
 	vector<double> BufSignalR;
 	vector<double> BufSignalI;
@@ -571,7 +578,7 @@ void Signals_Processing::Dopler_scaling(vector <complex<double>>& Signal, double
 	NewSignal.resize(Signal.size());
 	double alfa = 1 + koeff;
 	double speed = speedC * koeff;
-	double normT = 1; //шаг по времени в первоначальном сигнале
+	double normT = 1; //С€Р°Рі РїРѕ РІСЂРµРјРµРЅРё РІ РїРµСЂРІРѕРЅР°С‡Р°Р»СЊРЅРѕРј СЃРёРіРЅР°Р»Рµ
 	double deltaT = 1 * sqrt(1 - pow(speed, 2) / pow(speedC, 2));
 	for (int i = 0; i < BufSignal.size(); i++)
 	{
@@ -580,10 +587,10 @@ void Signals_Processing::Dopler_scaling(vector <complex<double>>& Signal, double
 	}
 	vector<double> NewSignalR;
 	vector<double> NewSignalI;
-	/*InterSpline(BufSignalR, NewSignalR, deltaT);
-	InterSpline(BufSignalI, NewSignalI, deltaT);*/
-	Linear_interpolation(BufSignalR, NewSignalR, deltaT);
-	Linear_interpolation(BufSignalI, NewSignalI, deltaT);
+	InterSpline(BufSignalR, NewSignalR, deltaT);
+	InterSpline(BufSignalI, NewSignalI, deltaT);
+	/*Linear_interpolation(BufSignalR, NewSignalR, deltaT);
+	Linear_interpolation(BufSignalI, NewSignalI, deltaT);*/
 	for (int i = 0; i < NewSignalR.size(); i++)
 	{
 		NewSignal[i] = NewSignalR[i] + Comj * NewSignalI[i];
@@ -593,7 +600,7 @@ void Signals_Processing::Dopler_scaling(vector <complex<double>>& Signal, double
 void Signals_Processing::Linear_interpolation(vector<double>& Old_Data, vector<double>& New_Data, double step)
 {
 	New_Data.clear();
-	int new_size = ((double)(Old_Data.size() - 1) /step) +1;
+	int new_size = ((double)(Old_Data.size() - 1) / step) + 1;
 	New_Data.push_back(Old_Data[0]);
 	for (int j = 1; j < new_size; j++)
 	{
@@ -615,31 +622,31 @@ void Signals_Processing::InterSpline(vector<double> Signal, vector<double>& NewS
 	vector<double> massy;
 	vector<double> mit;
 	int m = Signal.size();
-	massx.resize(m);       //Массив узлов интерполяции
-	massy.resize(m);       //Массив значений в узлах интерполяции
+	massx.resize(m);       //РњР°СЃСЃРёРІ СѓР·Р»РѕРІ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё
+	massy.resize(m);       //РњР°СЃСЃРёРІ Р·РЅР°С‡РµРЅРёР№ РІ СѓР·Р»Р°С… РёРЅС‚РµСЂРїРѕР»СЏС†РёРё
 	mit.resize(m);
-	massx[0] = 0;    //Заполняем массив узлов интерполяции
+	massx[0] = 0;    //Р—Р°РїРѕР»РЅСЏРµРј РјР°СЃСЃРёРІ СѓР·Р»РѕРІ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё
 	massy[0] = 0;
-	#pragma omp parallel for
+#pragma omp parallel for
 	for (int i = 0; i < m; i++)
 	{
-		massx[i] = i * step;    //Заполняем массив узлов интерполяции
-		massy[i] = Signal[i];         //Заполняем массив значении в узлах интерполяции
+		massx[i] = i * step;    //Р—Р°РїРѕР»РЅСЏРµРј РјР°СЃСЃРёРІ СѓР·Р»РѕРІ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё
+		massy[i] = Signal[i];         //Р—Р°РїРѕР»РЅСЏРµРј РјР°СЃСЃРёРІ Р·РЅР°С‡РµРЅРёРё РІ СѓР·Р»Р°С… РёРЅС‚РµСЂРїРѕР»СЏС†РёРё
 	}
-	//вычисление наклонов
+	//РІС‹С‡РёСЃР»РµРЅРёРµ РЅР°РєР»РѕРЅРѕРІ
 	mit[0] = ((4 * massy[1]) - massy[2] - 3 * massy[0]) / (2 * step);
-	#pragma omp parallel for
+#pragma omp parallel for
 	for (int k = 1; k < mit.size() - 1; k++)
 	{
 		mit[k] = (massy[k + 1] - massy[k - 1]) / (2 * step);
 	}
 	mit[mit.size() - 1] = (3 * massy[mit.size() - 1] + massy[mit.size() - 3] - 4 * massy[mit.size() - 2]) / (2 * step);
 	//double k = 0;
-	//double z = (spline(massx, massy, mit, k, step, 0));  //Переменная для хранения значения интерполянты в точке 0
+	//double z = (spline(massx, massy, mit, k, step, 0));  //РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ Р·РЅР°С‡РµРЅРёСЏ РёРЅС‚РµСЂРїРѕР»СЏРЅС‚С‹ РІ С‚РѕС‡РєРµ 0
 	NewSignal.clear();
 	int lol = massx[massx.size() - 1];
 	NewSignal.resize(lol);
-	#pragma omp parallel for
+#pragma omp parallel for
 	for (int k = 0; k < lol; k++)
 	{
 		int i = 0;
@@ -648,8 +655,117 @@ void Signals_Processing::InterSpline(vector<double> Signal, vector<double>& NewS
 			i++;
 		}
 		if (i != 0)i--;
-		NewSignal[i] =(spline(massx, massy, mit, i, step, k));  //Переменная для хранения значения интерполянты в точке
+		NewSignal[i] = (spline(massx, massy, mit, i, step, k));  //РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ Р·РЅР°С‡РµРЅРёСЏ РёРЅС‚РµСЂРїРѕР»СЏРЅС‚С‹ РІ С‚РѕС‡РєРµ
 	}
+}
+void Signals_Processing::Simple_Signals_Generator(vector <complex<double>>& Signal1, vector <complex<double>>& Signal2, int signalSize, int delaySize)
+{
+	Signal1.clear();
+	Signal2.clear();
+	struct obraz
+	{
+		int W_number; //С‚РµРєСѓС‰Р°СЏ СЂР°Р±РѕС‡Р°СЏ С‡Р°СЃС‚РѕС‚Р°
+		bool b_bit; //С‚РµРєСѓС‰РёР№ РїРµСЂРµРґР°РІР°РµРјС‹Р№ Р±РёС‚
+	};
+	int bitrate = BrV; //СЃС‚Р°РЅРґР°СЂС‚РЅС‹Р№ Р±РёС‚СЂРµР№С‚ РґР»СЏ JTIDS
+	int samplingJTIDS = sampling;// С‡Р°СЃС‚РѕС‚Р° РґРёСЃРєСЂРµС‚РёР·Р°С†РёРё
+	bit_time = samplingJTIDS / bitrate; //РєРѕР»-РІРѕ РѕС‚С‡С‘С‚РѕРІ РЅР° 1 Р±РёС‚
+	int bit_in_word = 32;
+	vector <obraz> SignalsObraz;
+	SignalsObraz.resize(signalSize * bit_time);
+
+	///////////////////////////////////////////////////
+	//scramble
+	vector<bool> bit_nabor;
+	bit_nabor.resize(signalSize);
+	int count1 = 0, count0 = 0;
+	for (int i = 0; i < bit_nabor.size(); i++)
+	{
+		double kkk = 300. + 1000. * rand() / RAND_MAX;
+		if (kkk > 500)
+		{
+			bit_nabor[i] = 1; count1++;
+		}
+		else
+		{
+			bit_nabor[i] = 0; count0++;
+		}
+	}
+	int M = 5;
+	vector<bool> key; key.resize(M);
+	for (int i = 0; i < key.size(); i++)
+	{
+		double kkk = 0 + 1000. * rand() / RAND_MAX;
+		if (kkk > 500) key[i] = 1;
+		else key[i] = 0;
+	}
+	for (u_int i = M; i < bit_nabor.size(); i++)
+	{
+		bool key_buf = false;
+		for (u_int j = 1; j <= M; j++)
+			key_buf = (key_buf + key[i - j]) % 2;
+		key.push_back(key_buf);
+	}
+	count0 = count1 = 0;
+	for (int i = 0; i < bit_nabor.size(); i++)
+	{
+		bit_nabor[i] = (bit_nabor[i] + key[i]) % 2;
+		if (bit_nabor[i]) count1++;
+		else count0++;
+	}
+	///////////////////////////////////////////////////
+	/// for b_bit
+	int interval = bit_time;
+	int buf_ii = 0;
+	double buf = 0 + 1000. * rand() / RAND_MAX;
+	bool bit_buf;
+	if (buf > 500) bit_buf = 1;
+	else bit_buf = 0;
+	int l = 0;
+	bit_buf = bit_nabor[l];
+	for (int i = 0; i < SignalsObraz.size(); i++)
+	{
+		buf_ii++;
+		SignalsObraz[i].b_bit = bit_buf;
+		if (buf_ii == interval)
+		{
+			buf_ii = 0;
+			buf = 0 + 1000. * rand() / RAND_MAX;
+			bit_buf;
+			if (buf > 500) bit_buf = 1;
+			else bit_buf = 0;
+			l++; if (l == bit_nabor.size())l--;
+			bit_buf = bit_nabor[l];
+		}
+	}
+	//////////
+	interval = (signalSize * bit_time) / 100;
+	buf_ii = 0;
+	int buf_number = pseudo_bit(0, 50);
+	for (int i = 0; i < SignalsObraz.size(); i++)
+	{
+		buf_ii++;
+		SignalsObraz[i].W_number = buf_number;
+		if (buf_ii == interval)
+		{
+			buf_ii = 0;
+			buf_number = pseudo_bit(0, 50);
+		}
+	}
+
+	Buffaza = 0;
+	double delta4astota = bitrate / 4;
+	for (int i = 0; i < SignalsObraz.size(); i++)
+	{
+		double local_frequencies = ((double)operating_frequencies[SignalsObraz[i].W_number] - 1087.5) * 1000000;
+		if (SignalsObraz[i].b_bit)Buffaza += 2 * M_PI * (local_frequencies + delta4astota) / sampling;
+		else Buffaza += 2 * M_PI * (local_frequencies - delta4astota) / sampling;
+		NormalPhaza(Buffaza);
+		Signal2.push_back(cos(Buffaza) + Comj * sin(Buffaza));
+	}
+	delaySize *= bit_time;
+	for (int i = delaySize; i < delaySize + Signal2.size() / 2; i++)
+		Signal1.push_back(Signal2[i]);
 }
 void Signals_Processing::Link16_Signals_Generator(vector <complex<double>>& Signal1, vector <complex<double>>& Signal2, int signalSize, int delaySize, bool scramble)
 {
@@ -657,12 +773,12 @@ void Signals_Processing::Link16_Signals_Generator(vector <complex<double>>& Sign
 	Signal2.clear();
 	struct obraz
 	{
-		int W_number; //текущая рабочая частота
-		bool b_bit; //текущий передаваемый бит
+		int W_number; //С‚РµРєСѓС‰Р°СЏ СЂР°Р±РѕС‡Р°СЏ С‡Р°СЃС‚РѕС‚Р°
+		bool b_bit; //С‚РµРєСѓС‰РёР№ РїРµСЂРµРґР°РІР°РµРјС‹Р№ Р±РёС‚
 	};
-	int bitrate = BrV; //стандартный битрейт для JTIDS
-	int samplingJTIDS = sampling;// частота дискретизации
-	bit_time = samplingJTIDS / bitrate; //кол-во отчётов на 1 бит
+	int bitrate = BrV; //СЃС‚Р°РЅРґР°СЂС‚РЅС‹Р№ Р±РёС‚СЂРµР№С‚ РґР»СЏ JTIDS
+	int samplingJTIDS = sampling;// С‡Р°СЃС‚РѕС‚Р° РґРёСЃРєСЂРµС‚РёР·Р°С†РёРё
+	bit_time = samplingJTIDS / bitrate; //РєРѕР»-РІРѕ РѕС‚С‡С‘С‚РѕРІ РЅР° 1 Р±РёС‚
 	int bit_in_word = 32;
 	vector <obraz> SignalsObraz;
 	SignalsObraz.resize(signalSize * bit_time);
@@ -715,9 +831,9 @@ void Signals_Processing::Link16_Signals_Generator(vector <complex<double>>& Sign
 	}
 	///////////////////////////////////////////////////
 
-	/// for для b_bit
-	int interval = bit_time;//интервал счётчика
-	int buf_ii = 0;//счётчик
+	/// for РґР»СЏ b_bit
+	int interval = bit_time;//РёРЅС‚РµСЂРІР°Р» СЃС‡С‘С‚С‡РёРєР°
+	int buf_ii = 0;//СЃС‡С‘С‚С‡РёРє
 	double buf = 0 + 1000. * rand() / RAND_MAX;
 	bool bit_buf;
 	if (buf > 500) bit_buf = 1;
@@ -739,9 +855,9 @@ void Signals_Processing::Link16_Signals_Generator(vector <complex<double>>& Sign
 			bit_buf = bit_nabor[l];
 		}
 	}
-	/// for для W_number
-	interval = bit_time * bit_in_word;//интервал счётчика
-	buf_ii = 0;//счётчик
+	/// for РґР»СЏ W_number
+	interval = bit_time * bit_in_word;//РёРЅС‚РµСЂРІР°Р» СЃС‡С‘С‚С‡РёРєР°
+	buf_ii = 0;//СЃС‡С‘С‚С‡РёРє
 	int buf_number = pseudo_bit(0, 50);
 	for (int i = 0; i < SignalsObraz.size(); i++)
 	{
@@ -753,11 +869,11 @@ void Signals_Processing::Link16_Signals_Generator(vector <complex<double>>& Sign
 			buf_number = pseudo_bit(0, 50);
 		}
 	}
-	///Заполнение сигнала
+	///Р—Р°РїРѕР»РЅРµРЅРёРµ СЃРёРіРЅР°Р»Р°
 	Buffaza = 0;
 	double delta4astota = bitrate / 4;
-	for (int i = 0; i < SignalsObraz.size(); i++)//Исследуемый сигнал
-	{//частотная
+	for (int i = 0; i < SignalsObraz.size(); i++)//РСЃСЃР»РµРґСѓРµРјС‹Р№ СЃРёРіРЅР°Р»
+	{//С‡Р°СЃС‚РѕС‚РЅР°СЏ
 		double local_frequencies = ((double)operating_frequencies[SignalsObraz[i].W_number] - 1087.5) * 1000000;
 		if (SignalsObraz[i].b_bit)Buffaza += 2 * M_PI * (local_frequencies + delta4astota) / sampling;
 		else Buffaza += 2 * M_PI * (local_frequencies - delta4astota) / sampling;
@@ -765,32 +881,32 @@ void Signals_Processing::Link16_Signals_Generator(vector <complex<double>>& Sign
 		Signal2.push_back(cos(Buffaza) + Comj * sin(Buffaza));
 	}
 	delaySize *= bit_time;
-	for (int i = delaySize; i < delaySize + Signal2.size() / 2; i++) //Опорный сигнал
+	for (int i = delaySize; i < delaySize + Signal2.size() / 2; i++) //РћРїРѕСЂРЅС‹Р№ СЃРёРіРЅР°Р»
 		Signal1.push_back(Signal2[i]);
 }
 void Signals_Processing::FHSS(vector <complex<double>>& Signal1, vector <complex<double>>& Signal2, int signalSize, int delaySize)
 {
 	struct obraz
 	{
-		int W_number; //текущая рабочая частота
-		bool b_bit; //текущий передаваемый бит
+		int W_number; //С‚РµРєСѓС‰Р°СЏ СЂР°Р±РѕС‡Р°СЏ С‡Р°СЃС‚РѕС‚Р°
+		bool b_bit; //С‚РµРєСѓС‰РёР№ РїРµСЂРµРґР°РІР°РµРјС‹Р№ Р±РёС‚
 	};
 	Signal1.clear();
 	Signal2.clear();
 
-	int time_windows_count = 100;//количество перестроек частоты
-	int time_windows = signalSize / time_windows_count;//интервал на одной рабочей частоте в отсчётах
-	int bitrate = BrV; //стандартный битрейт для JTIDS
+	int time_windows_count = 100;//РєРѕР»РёС‡РµСЃС‚РІРѕ РїРµСЂРµСЃС‚СЂРѕРµРє С‡Р°СЃС‚РѕС‚С‹
+	int time_windows = signalSize / time_windows_count;//РёРЅС‚РµСЂРІР°Р» РЅР° РѕРґРЅРѕР№ СЂР°Р±РѕС‡РµР№ С‡Р°СЃС‚РѕС‚Рµ РІ РѕС‚СЃС‡С‘С‚Р°С…
+	int bitrate = BrV; //СЃС‚Р°РЅРґР°СЂС‚РЅС‹Р№ Р±РёС‚СЂРµР№С‚ РґР»СЏ JTIDS
 
 	int samplingJTIDS = sampling;
-	double SignalTime = (double)signalSize / samplingJTIDS; //длительность сигнала в с
-	double WindowTime = 1. / bitrate;//длительность передачи бита в с
-	int bits_count = SignalTime / WindowTime;//количество бит для передачи
-	int time_bits = signalSize / bits_count;//интервал на один бит в отсчётах
+	double SignalTime = (double)signalSize / samplingJTIDS; //РґР»РёС‚РµР»СЊРЅРѕСЃС‚СЊ СЃРёРіРЅР°Р»Р° РІ СЃ
+	double WindowTime = 1. / bitrate;//РґР»РёС‚РµР»СЊРЅРѕСЃС‚СЊ РїРµСЂРµРґР°С‡Рё Р±РёС‚Р° РІ СЃ
+	int bits_count = SignalTime / WindowTime;//РєРѕР»РёС‡РµСЃС‚РІРѕ Р±РёС‚ РґР»СЏ РїРµСЂРµРґР°С‡Рё
+	int time_bits = signalSize / bits_count;//РёРЅС‚РµСЂРІР°Р» РЅР° РѕРґРёРЅ Р±РёС‚ РІ РѕС‚СЃС‡С‘С‚Р°С…
 	vector <obraz> SignalsObraz;
 	SignalsObraz.resize(signalSize);
 
-	/// for для W_number
+	/// for РґР»СЏ W_number
 	for (int i = 0; i < time_windows_count; i++)
 	{
 		int buf_number = pseudo_bit(0, 50);
@@ -803,7 +919,7 @@ void Signals_Processing::FHSS(vector <complex<double>>& Signal1, vector <complex
 			}
 		}
 	}
-	/// for для b_bit
+	/// for РґР»СЏ b_bit
 	for (int i = 0; i < bits_count; i++)
 	{
 		double buf = 0 + 1000. * rand() / RAND_MAX;
@@ -819,18 +935,18 @@ void Signals_Processing::FHSS(vector <complex<double>>& Signal1, vector <complex
 			}
 		}
 	}
-	///Заполнение сигнала
+	///Р—Р°РїРѕР»РЅРµРЅРёРµ СЃРёРіРЅР°Р»Р°
 	Buffaza = 0;
 	double delta4astota = bitrate / 4;
-	for (int i = 0; i < signalSize; i++)//Исследуемый сигнал
-	{//частотная
+	for (int i = 0; i < signalSize; i++)//РСЃСЃР»РµРґСѓРµРјС‹Р№ СЃРёРіРЅР°Р»
+	{//С‡Р°СЃС‚РѕС‚РЅР°СЏ
 		double local_frequencies = ((double)operating_frequencies[SignalsObraz[i].W_number] - 1087.5) * 1000000;
 		if (SignalsObraz[i].b_bit)Buffaza += 2 * M_PI * (local_frequencies + delta4astota) / sampling;
 		else Buffaza += 2 * M_PI * (local_frequencies - delta4astota) / sampling;
 		NormalPhaza(Buffaza);
 		Signal2.push_back(cos(Buffaza) + Comj * sin(Buffaza));
 	}
-	for (int i = delaySize; i < delaySize + Signal2.size() / 2; i++) //Опорный сигнал
+	for (int i = delaySize; i < delaySize + Signal2.size() / 2; i++) //РћРїРѕСЂРЅС‹Р№ СЃРёРіРЅР°Р»
 		Signal1.push_back(Signal2[i]);
 }
 void Signals_Processing::FHSS(int signalSize, int delaySize)
@@ -846,22 +962,22 @@ void Signals_Processing::FHSS(int signalSize, int delaySize)
 	}
 	struct obraz
 	{
-		int W_number; //текущая рабочая частота
-		bool b_bit; //текущий передаваемый бит
+		int W_number; //С‚РµРєСѓС‰Р°СЏ СЂР°Р±РѕС‡Р°СЏ С‡Р°СЃС‚РѕС‚Р°
+		bool b_bit; //С‚РµРєСѓС‰РёР№ РїРµСЂРµРґР°РІР°РµРјС‹Р№ Р±РёС‚
 	};
-	int time_windows_count = 200;//количество перестроек частоты
-	int time_windows = signalSize / time_windows_count;//интервал на одной рабочей частоте в отсчётах
-	int bitrate = BrV; //стандартный битрейт для JTIDS
+	int time_windows_count = 200;//РєРѕР»РёС‡РµСЃС‚РІРѕ РїРµСЂРµСЃС‚СЂРѕРµРє С‡Р°СЃС‚РѕС‚С‹
+	int time_windows = signalSize / time_windows_count;//РёРЅС‚РµСЂРІР°Р» РЅР° РѕРґРЅРѕР№ СЂР°Р±РѕС‡РµР№ С‡Р°СЃС‚РѕС‚Рµ РІ РѕС‚СЃС‡С‘С‚Р°С…
+	int bitrate = BrV; //СЃС‚Р°РЅРґР°СЂС‚РЅС‹Р№ Р±РёС‚СЂРµР№С‚ РґР»СЏ JTIDS
 
 	int samplingJTIDS = sampling;
-	double SignalTime = (double)signalSize / samplingJTIDS; //длительность сигнала в с
-	double WindowTime = 1. / bitrate;//длительность передачи бита в с
-	int bits_count = SignalTime / WindowTime;//количество бит для передачи
-	int time_bits = signalSize / bits_count;//интервал на один бит в отсчётах
+	double SignalTime = (double)signalSize / samplingJTIDS; //РґР»РёС‚РµР»СЊРЅРѕСЃС‚СЊ СЃРёРіРЅР°Р»Р° РІ СЃ
+	double WindowTime = 1. / bitrate;//РґР»РёС‚РµР»СЊРЅРѕСЃС‚СЊ РїРµСЂРµРґР°С‡Рё Р±РёС‚Р° РІ СЃ
+	int bits_count = SignalTime / WindowTime;//РєРѕР»РёС‡РµСЃС‚РІРѕ Р±РёС‚ РґР»СЏ РїРµСЂРµРґР°С‡Рё
+	int time_bits = signalSize / bits_count;//РёРЅС‚РµСЂРІР°Р» РЅР° РѕРґРёРЅ Р±РёС‚ РІ РѕС‚СЃС‡С‘С‚Р°С…
 	vector <obraz> SignalsObraz;
 	SignalsObraz.resize(signalSize);
 
-	/// for для W_number
+	/// for РґР»СЏ W_number
 	for (int i = 0; i < time_windows_count; i++)
 	{
 		int buf_number = pseudo_bit(0, 50);
@@ -874,7 +990,7 @@ void Signals_Processing::FHSS(int signalSize, int delaySize)
 			}
 		}
 	}
-	/// for для b_bit
+	/// for РґР»СЏ b_bit
 	for (int i = 0; i < bits_count; i++)
 	{
 		double buf = 0 + 1000. * rand() / RAND_MAX;
@@ -890,11 +1006,11 @@ void Signals_Processing::FHSS(int signalSize, int delaySize)
 			}
 		}
 	}
-	///Заполнение сигнала
+	///Р—Р°РїРѕР»РЅРµРЅРёРµ СЃРёРіРЅР°Р»Р°
 	Buffaza = 0;
 	double delta4astota = bitrate / 4;
-	for (int i = 0; i < signalSize; i++) //Исследуемый сигнал
-	{//частотная
+	for (int i = 0; i < signalSize; i++) //РСЃСЃР»РµРґСѓРµРјС‹Р№ СЃРёРіРЅР°Р»
+	{//С‡Р°СЃС‚РѕС‚РЅР°СЏ
 		double local_frequencies = ((double)operating_frequencies[SignalsObraz[i].W_number] - 1087.5) * 1000000;
 		if (SignalsObraz[i].b_bit)Buffaza += 2 * M_PI * (local_frequencies + delta4astota) / sampling;
 		else Buffaza += 2 * M_PI * (local_frequencies - delta4astota) / sampling;
@@ -903,7 +1019,7 @@ void Signals_Processing::FHSS(int signalSize, int delaySize)
 	}
 
 	for (int j = 0; j < FHSS_Signals_initial.size(); j++)
-		for (int i = delaySize; i < delaySize + signalSize / 2; i++) //Опорный сигнал
+		for (int i = delaySize; i < delaySize + signalSize / 2; i++) //РћРїРѕСЂРЅС‹Р№ СЃРёРіРЅР°Р»
 			FHSS_Signals_initial[j].push_back(FHSS_Signals[j][i]);
 
 }
