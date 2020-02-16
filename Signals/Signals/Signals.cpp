@@ -1,7 +1,7 @@
 ﻿
 // Signals.cpp: определяет поведение классов для приложения.
 //
-
+#pragma once
 #include "pch.h"
 #include "framework.h"
 #include "Signals.h"

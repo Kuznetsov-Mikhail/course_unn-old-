@@ -1,6 +1,7 @@
-﻿#include "pch.h"
+﻿#pragma once
+#include "pch.h"
 #include "Signals_Processing.h"
-
+#include "cubic.h"
 
 Signals_Processing::Signals_Processing()
 {
@@ -80,8 +81,12 @@ void Signals_Processing::addNoize(vector < complex<double> >& mass, double Noize
 	for (int i = 0; i < mass.size(); i++)
 	{
 		sum_shum += shum_n[i] * shum_n[i];
-	}
-	alfa = sqrt(sum_signal / (sum_shum * pow(10., 0.1 * NoizeV)));
+	}	
+	sum_signal = sqrt(sum_signal);
+	sum_shum = sqrt(sum_shum);
+
+	alfa = sum_signal / (sum_shum * (pow(10, NoizeV / 20.)));
+	//alfa = sqrt(sum_signal / (sum_shum * pow(10., 0.1 * NoizeV)));
 	for (int i = 0; i < mass.size(); i++)
 	{
 		mass[i] += alfa * shum_n[i] + Comj * alfa * shum_n[i];
@@ -329,7 +334,6 @@ void Signals_Processing::Uncertainty_omp(vector<double>& mass, vector<complex<do
 	double localMax;
 	int k = step2(Signal1.size());
 	mass.resize(Signal1.size());
-
 #pragma omp parallel for
 	for (int i = 0; i < Signal1.size(); i++)
 	{
@@ -337,6 +341,11 @@ void Signals_Processing::Uncertainty_omp(vector<double>& mass, vector<complex<do
 		vector <complex<double>> RrrK;// суммирование Rrr по блокам ksum
 		Rrr.clear();
 		Rrr.resize(k);
+		int gran_size = Signal1.size() - i;
+		//for (int j = 0; j < gran_size; j++)
+		//{
+		//	Rrr[j] = (Signal1[j] * conj(Signal2[j + i]));
+		//}
 #pragma omp parallel for
 		for (int j = 0; j < Signal1.size(); j++)
 		{
@@ -384,13 +393,10 @@ void Signals_Processing::Uncertainty_omp(vector<float>& mass, signal_buf& Signal
 		vector <complex<double>> RrrK;// суммирование Rrr по блокам ksum
 		Rrr.clear();
 		Rrr.resize(k);
+		int gran_size = Signal1.size() - i;
 #pragma omp parallel for
-		for (int j = 0; j < Signal1.size(); j++)
+		for (int j = 0; j < gran_size; j++)
 		{
-			if ((i + j) == Signal2.size())
-			{
-				break;
-			}
 			Rrr[j] = (Signal1[j] * conj(Signal2[j + i]));
 		}
 		int group = k / ksum;
@@ -570,32 +576,55 @@ int Signals_Processing::step2(int sizein)
 }
 void Signals_Processing::Dopler_scaling(vector <complex<double>>& Signal, double koeff)
 {
-	double speedC = 299792458; //м.с.
+	double speedC = 299792458; //м/с
 	vector <complex<double>> BufSignal = Signal;
-	vector<double> BufSignalR;
-	vector<double> BufSignalI;
+	vector<double> BufSignalR; BufSignalR.resize(BufSignal.size());
+	vector<double> BufSignalI; BufSignalI.resize(BufSignal.size());
 	vector <complex<double>> NewSignal;
-	NewSignal.resize(Signal.size());
+	
 	double alfa = 1 + koeff;
 	double speed = speedC * koeff;
 	double normT = 1; //шаг по времени в первоначальном сигнале
-	double deltaT = 1 * sqrt(1 - pow(speed, 2) / pow(speedC, 2));
+	double deltaT = 1. / sqrt(1 - pow(speed, 2) / pow(speedC, 2)); //новый шаг по времени
 	for (int i = 0; i < BufSignal.size(); i++)
 	{
-		BufSignalR.push_back(BufSignal[i].real());
-		BufSignalI.push_back(BufSignal[i].imag());
+		BufSignalR[i] = (BufSignal[i].real());
+		BufSignalI[i] = (BufSignal[i].imag());
 	}
 	vector<double> NewSignalR;
 	vector<double> NewSignalI;
-	InterSpline(BufSignalR, NewSignalR, deltaT);
-	InterSpline(BufSignalI, NewSignalI, deltaT);
-	/*Linear_interpolation(BufSignalR, NewSignalR, deltaT);
-	Linear_interpolation(BufSignalI, NewSignalI, deltaT);*/
-	for (int i = 0; i < NewSignalR.size(); i++)
+	//Интерполяция сплайном
+	//InterSpline(BufSignalR, NewSignalR, deltaT); 
+	//InterSpline(BufSignalI, NewSignalI, deltaT);
+	//Линейная интерполяция
+	//Linear_interpolation(BufSignalR, NewSignalR, deltaT);
+	//Linear_interpolation(BufSignalI, NewSignalI, deltaT);
+	Cubic_Inter_spline(BufSignalR, NewSignalR, deltaT);
+	Cubic_Inter_spline(BufSignalI, NewSignalI, deltaT);
+	NewSignal.resize(NewSignalI.size());
+	for (int i = 0; i < NewSignal.size(); i++)
 	{
 		NewSignal[i] = NewSignalR[i] + Comj * NewSignalI[i];
 	}
 	Signal.clear(); Signal = NewSignal;
+}
+void Signals_Processing::Cubic_Inter_spline(vector<double>& Old_Data, vector<double>& New_Data, double step)
+{
+	vector<double>X; X.resize(Old_Data.size());
+	vector<double>Y; Y.resize(Old_Data.size());
+	for (int i = 0; i < Old_Data.size(); i++)
+	{
+		X[i] = (i);
+		Y[i] = (Old_Data[i]);
+	}
+	tk::spline s;
+	s.set_points(X, Y);
+	New_Data.resize((double)Old_Data.size() / (double)step);
+	for (size_t i = 0; i < New_Data.size(); i++)
+	{
+		double x = step * i;
+		New_Data[i] = (s(x));
+	}
 }
 void Signals_Processing::Linear_interpolation(vector<double>& Old_Data, vector<double>& New_Data, double step)
 {
@@ -616,7 +645,7 @@ void Signals_Processing::Linear_interpolation(vector<double>& Old_Data, vector<d
 		}
 	}
 }
-void Signals_Processing::InterSpline(vector<double> Signal, vector<double>& NewSignal, double step)
+void Signals_Processing::InterSpline(vector<double> &Signal, vector<double>& NewSignal, double step)
 {
 	vector<double> massx;
 	vector<double> massy;

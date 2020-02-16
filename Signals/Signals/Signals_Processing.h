@@ -3,6 +3,7 @@
 #include <chrono>
 #include <omp.h>
 #include "fast_convolution.h"
+//#include "cubic.h"
 #define M_PI 3.1415926535
 #define Comj complex<double>(0,1)
 
@@ -55,16 +56,16 @@ public:
 	*param speed - скорость объекта
 	*/
 	void Dopler_scaling(vector <complex<double>>& Signal, double koeff);
-	void InterSpline(vector<double> Signal, vector<double>& NewSignal, double step);//интерпол€ци€ сплайном
+	void InterSpline(vector<double> &Signal, vector<double>& NewSignal, double step);//интерпол€ци€ сплайном
 	void Linear_interpolation(vector<double>& Old_Data, vector<double>& New_Data, double step);//линейна€ интерпол€ци€
-
+	void Cubic_Inter_spline(vector<double>& Old_Data, vector<double>& New_Data, double step);
 	void fur(vector <complex<double>>& data, int is);//чистый фурье
 	void FAST_FUR(vector <complex<double>> Signal, vector <complex<double>>& Spectr,bool is);
 	void spVertex(vector <complex<double>>& Spectr);
 	double Max(vector<double> Mass);
 	double Min(vector<double> Mass);	
 
-	double spline(vector<double>massx, vector<double>massy, vector<double>mit, int i, double h, double x) //интерпол€ционна€ формула
+	double spline(vector<double>&massx, vector<double>&massy, vector<double>&mit, int i, double h, double x) //интерпол€ционна€ формула
 	{
 		double s = ((massx[i + 1] - x) * (massx[i + 1] - x) * (2 * (x - massx[i]) + h) * massy[i]) / (h * h * h) + ((x - massx[i]) *
 			(x - massx[i]) * (2 * (massx[i + 1] - x) + h) * massy[i + 1]) / (h * h * h) + ((massx[i + 1] - x) * (massx[i + 1] - x) *

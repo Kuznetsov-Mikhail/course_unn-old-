@@ -1,7 +1,7 @@
 ﻿
 // SignalsDlg.cpp: файл реализации
 //
-
+#pragma once
 #include "pch.h"
 #include "framework.h"
 #include "Signals.h"
@@ -31,6 +31,7 @@ CSignalsDlg::CSignalsDlg(CWnd* pParent /*=nullptr*/)
 	, Dopler_On(FALSE)
 	, scramble(TRUE)
 	, parallel(TRUE)
+	, Signals_generator_type(FALSE)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -55,6 +56,7 @@ void CSignalsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_CHECK4, parallel);
 	DDX_Control(pDX, IDC_PROGRESS1, Prog_bar);
 	DDX_Control(pDX, IDC_PROGRESS2, ProgBarRes);
+	DDX_Check(pDX, IDC_CHECK5, Signals_generator_type);
 }
 
 BEGIN_MESSAGE_MAP(CSignalsDlg, CDialogEx)
@@ -385,8 +387,8 @@ void CSignalsDlg::OnBnClickedButton1() //Генерация сигналов
 	ImSpectr1.clear();
 	ImSpectr2.clear();
 
-	sp.Link16_Signals_Generator(ImSignal1, ImSignal2, bits_size, delay_size, scramble);
-	//sp.Simple_Signals_Generator(ImSignal1, ImSignal2, bits_size, delay_size);
+	if(Signals_generator_type)sp.Link16_Signals_Generator(ImSignal1, ImSignal2, bits_size, delay_size,1);
+	else sp.Simple_Signals_Generator(ImSignal1, ImSignal2, bits_size, delay_size);
 	ImSignal2Rch.clear();
 	ImSignal2Rch = ImSignal2;
 
@@ -659,8 +661,8 @@ void CSignalsDlg::OnBnClickedButton6()//Исследование
 			ResearchRrr.resize(0);
 			ImSpectr1.clear();
 			ImSpectr2.clear();
-
-			sp.Link16_Signals_Generator(ImSignal1, ImSignal2, bits_size, delay_size, scramble);
+			if(Signals_generator_type) sp.Link16_Signals_Generator(ImSignal1, ImSignal2, bits_size, delay_size, scramble);
+			else sp.Simple_Signals_Generator(ImSignal1, ImSignal2, bits_size, delay_size);
 			ImSignal2Rch.clear();
 			ImSignal2Rch = ImSignal2;
 
