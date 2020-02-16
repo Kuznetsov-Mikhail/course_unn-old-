@@ -21,17 +21,18 @@ CSignalsDlg::CSignalsDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_SIGNALS_DIALOG, pParent)
 	, bitrate(5000000)
 	, sampling(350000000)
-	, bits_size(1700)
-	, delay_size(200)
+	, bits_size(2250)
+	, delay_size(750)
 	, delay_lama(0)
 	, Signals_or_Spectrs(FALSE)
 	, noize_lvl(100)
 	, f_dop(30000)
 	, alfa(2e-05)
-	, Dopler_On(FALSE)
+	, Dopler_On(TRUE)
 	, scramble(TRUE)
 	, parallel(TRUE)
-	, Signals_generator_type(FALSE)
+	, Signals_generator_type(TRUE)
+	, test_time_cr(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -57,6 +58,7 @@ void CSignalsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_PROGRESS1, Prog_bar);
 	DDX_Control(pDX, IDC_PROGRESS2, ProgBarRes);
 	DDX_Check(pDX, IDC_CHECK5, Signals_generator_type);
+	DDX_Text(pDX, IDC_EDIT9, test_time_cr);
 }
 
 BEGIN_MESSAGE_MAP(CSignalsDlg, CDialogEx)
@@ -439,8 +441,11 @@ void CSignalsDlg::OnBnClickedButton3()//Функция Uncertainty
 	SetCursor(LoadCursor(nullptr, IDC_WAIT));
 	updateSP();
 	ResearchRrr.clear();
-	sp.Uncertainty(ResearchRrr, ImSignal1, ImSignal2, 4);
-
+	auto start = steady_clock::now();
+	sp.Uncertainty(ResearchRrr, ImSignal1, ImSignal2, 8);
+	auto end = steady_clock::now();
+	auto elapsed = duration_cast<milliseconds>(end - start);
+	test_time_cr = elapsed.count();
 	if (ResearchRrr.size() != NULL)
 	{
 		double buff_ResearchRrr = 0;
@@ -463,8 +468,12 @@ void CSignalsDlg::OnBnClickedButton5() //Функция Uncertainty OMP
 	SetCursor(LoadCursor(nullptr, IDC_WAIT));
 	updateSP();
 	ResearchRrr.clear();
-	sp.Uncertainty_omp(ResearchRrr, ImSignal1, ImSignal2, 8);
 
+	auto start = steady_clock::now();
+	sp.Uncertainty_omp(ResearchRrr, ImSignal1, ImSignal2, 8);
+	auto end = steady_clock::now();
+	auto elapsed = duration_cast<milliseconds>(end - start);
+	test_time_cr = elapsed.count();
 	if (ResearchRrr.size() != NULL)
 	{
 		double buff_ResearchRrr = 0;

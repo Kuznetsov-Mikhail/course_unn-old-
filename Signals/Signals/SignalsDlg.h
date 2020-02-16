@@ -121,4 +121,5 @@ public:
 		return true;
 	}
 	BOOL Signals_generator_type;
+	int test_time_cr;
 };

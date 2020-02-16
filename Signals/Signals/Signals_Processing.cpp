@@ -808,7 +808,7 @@ void Signals_Processing::Link16_Signals_Generator(vector <complex<double>>& Sign
 	int bitrate = BrV; //стандартный битрейт для JTIDS
 	int samplingJTIDS = sampling;// частота дискретизации
 	bit_time = samplingJTIDS / bitrate; //кол-во отчётов на 1 бит
-	int bit_in_word = 32;
+	int bit_in_word = 1; //32 в JTIDS
 	vector <obraz> SignalsObraz;
 	SignalsObraz.resize(signalSize * bit_time);
 
