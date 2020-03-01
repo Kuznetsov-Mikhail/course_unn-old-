@@ -544,20 +544,14 @@ void Signals_Processing::fur(vector <complex <double>>& data, int is)
 double Signals_Processing::Max(vector<double> Mass)
 {
 	double ymax = 0;
-	for (int j = 0; j < Mass.size(); j++)
-	{
-		if (Mass[j] > ymax)ymax = Mass[j];
-	}
+	for (auto J : Mass) if (J > ymax) ymax = J;
 	return ymax;
 }
 double Signals_Processing::Min(vector<double> Mass)
 {
-	double ymax = 0;
-	for (int j = 0; j < Mass.size(); j++)
-	{
-		if (Mass[j] < ymax)ymax = Mass[j];
-	}
-	return ymax;
+	double ymin = 0;
+	for (auto J : Mass) if (J < ymin) ymin = J;
+	return ymin;
 }
 int Signals_Processing::step2(int sizein)
 {

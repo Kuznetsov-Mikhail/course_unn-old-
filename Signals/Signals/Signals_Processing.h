@@ -16,7 +16,7 @@ class Signals_Processing
 
 public:
 	Signals_Processing();
-	~Signals_Processing();
+	virtual ~Signals_Processing();
 
 	double Buffaza; // переменная для хранения фазы
 	double V; //несущая частота
