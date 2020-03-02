@@ -53,13 +53,11 @@ void Signals_Processing::addNoize(vector<double>& mass, double NoizeV)
 }
 void Signals_Processing::addNoize(vector < complex<double> >& mass, double NoizeV)
 {
-	int NNN = mass.size();
-	vector<double> shum_n;
-	shum_n.resize(NNN);
-	double alfa;
-	for (int i = 0; i < mass.size(); i++)
+	vector<double> shum_ampl;
+	shum_ampl.resize(mass.size());	
+	for (int i = 0; i < shum_ampl.size(); i++)
 	{
-		shum_n[i] = 0;
+		shum_ampl[i] = 0;
 	}
 	double sum_signal = 0;
 	double sum_shum = 0;
@@ -76,22 +74,28 @@ void Signals_Processing::addNoize(vector < complex<double> >& mass, double Noize
 		{
 			ksi += (double)((rand() % 21 - 10) / 10.);
 		}
-		shum_n[i] = ksi / M;
+		shum_ampl[i] = ksi / M;
+	}
+	vector<complex<double>> shum_c(shum_ampl.size());
+	for (int i = 0; i < shum_c.size(); i++)
+	{
+		double r_phi = (rand() / RAND_MAX) * 2 * M_PI;
+		shum_c[i] = shum_ampl[i] * cos(r_phi) + Comj * sin(r_phi);
 	}
 	for (int i = 0; i < mass.size(); i++)
 	{
-		sum_shum += shum_n[i] * shum_n[i];
+		sum_shum += shum_c[i].real() * shum_c[i].real() + \
+			shum_c[i].imag() * shum_c[i].imag();
 	}	
 	sum_signal = sqrt(sum_signal);
 	sum_shum = sqrt(sum_shum);
 
-	alfa = sum_signal / (sum_shum * (pow(10, NoizeV / 20.)));
+	double alfa = sum_signal / (sum_shum * (pow(10, NoizeV / 20.)));
 	//alfa = sqrt(sum_signal / (sum_shum * pow(10., 0.1 * NoizeV)));
 	for (int i = 0; i < mass.size(); i++)
 	{
-		mass[i] += alfa * shum_n[i] + Comj * alfa * shum_n[i];
+		mass[i] += alfa * shum_c[i];
 	}
-	shum_n.resize(0);
 }
 void Signals_Processing::NormalPhaza(double& phaza)
 {
@@ -483,13 +487,7 @@ void Signals_Processing::spVertex(vector <complex<double>>& Spectr)
 	for (int i = 0; i < second.size(); i++)Spectr.push_back(second[i]); second.clear();
 	for (int i = 0; i < first.size(); i++)Spectr.push_back(first[i]);	first.clear();
 }
-void Signals_Processing::Dopler_shift(vector<complex<double>>& mass, double PhiDopler)
-{
-	for (int i = 0; i < mass.size(); i++)
-	{
-		mass[i] *= exp(Comj * 2. * M_PI * PhiDopler * (double)i / sampling);
-	}
-}
+
 void Signals_Processing::fur(vector <complex <double>>& data, int is)
 {
 	int i, j, istep, n;
@@ -568,18 +566,27 @@ int Signals_Processing::step2(int sizein)
 	}
 	return pow(2, i);
 }
+void Signals_Processing::Dopler(vector <complex<double>>& Signal, double shift, double center_frequency)
+{
+	double alfa = shift / center_frequency;
+	Dopler_shift(Signal, shift);
+	Dopler_scaling(Signal, alfa);
+}
+void Signals_Processing::Dopler_shift(vector<complex<double>>& mass, double PhiDopler)
+{
+	for (int i = 0; i < mass.size(); i++)
+	{
+		mass[i] *= exp(Comj * 2. * M_PI * PhiDopler * (double)i / sampling);
+	}
+}
 void Signals_Processing::Dopler_scaling(vector <complex<double>>& Signal, double koeff)
 {
-	double speedC = 299792458; //м/с
 	vector <complex<double>> BufSignal = Signal;
 	vector<double> BufSignalR; BufSignalR.resize(BufSignal.size());
 	vector<double> BufSignalI; BufSignalI.resize(BufSignal.size());
 	vector <complex<double>> NewSignal;
 	
 	double alfa = 1 + koeff;
-	double speed = speedC * koeff;
-	double normT = 1; //шаг по времени в первоначальном сигнале
-	double deltaT = 1. / sqrt(1 - pow(speed, 2) / pow(speedC, 2)); //новый шаг по времени
 	for (int i = 0; i < BufSignal.size(); i++)
 	{
 		BufSignalR[i] = (BufSignal[i].real());
@@ -593,8 +600,8 @@ void Signals_Processing::Dopler_scaling(vector <complex<double>>& Signal, double
 	//Линейная интерполяция
 	//Linear_interpolation(BufSignalR, NewSignalR, deltaT);
 	//Linear_interpolation(BufSignalI, NewSignalI, deltaT);
-	Cubic_Inter_spline(BufSignalR, NewSignalR, deltaT);
-	Cubic_Inter_spline(BufSignalI, NewSignalI, deltaT);
+	Cubic_Inter_spline(BufSignalR, NewSignalR, alfa);
+	Cubic_Inter_spline(BufSignalI, NewSignalI, alfa);
 	NewSignal.resize(NewSignalI.size());
 	for (int i = 0; i < NewSignal.size(); i++)
 	{

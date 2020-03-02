@@ -89,25 +89,23 @@ BEGIN
     PUSHBUTTON      "Выход",IDCANCEL,726,329,85,14
     CONTROL         "",IDC_SIGNAL1,"Static",SS_BITMAP,7,7,20,20
     EDITTEXT        IDC_EDIT1,739,17,70,14,ES_AUTOHSCROLL
-    LTEXT           "Bitrate:",IDC_STATIC,714,19,25,8
+    LTEXT           "Bitrate:",IDC_STATIC,713,19,25,8
     EDITTEXT        IDC_EDIT2,739,33,70,14,ES_AUTOHSCROLL
     LTEXT           "Sampling:",IDC_STATIC,703,35,34,8
     EDITTEXT        IDC_EDIT3,739,49,70,14,ES_AUTOHSCROLL
     LTEXT           "Кол-во принятых бит:",IDC_STATIC,662,51,75,8
     EDITTEXT        IDC_EDIT4,739,65,70,14,ES_AUTOHSCROLL
-    LTEXT           "Установить задержку(бит):",IDC_STATIC,646,67,93,8
+    LTEXT           "Установить задержку(бит):",IDC_STATIC,645,67,93,8
     EDITTEXT        IDC_EDIT5,739,82,70,14,ES_AUTOHSCROLL | WS_DISABLED
-    LTEXT           "Задержка(бит):",IDC_STATIC,686,84,53,8
+    LTEXT           "Задержка(бит):",IDC_STATIC,685,84,53,8
     CONTROL         "Сигналы/Спектры",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,736,145,76,10
     EDITTEXT        IDC_EDIT6,739,98,70,14,ES_AUTOHSCROLL
-    LTEXT           "Уровень шума(дБ):",IDC_STATIC,674,100,65,8
+    LTEXT           "Уровень шума(дБ):",IDC_STATIC,673,100,65,8
     GROUPBOX        "Параметры сигналов",IDC_Box1,639,7,173,109
-    GROUPBOX        "Параметры эффекта Доплера",IDC_Box2,517,7,117,57
+    GROUPBOX        "Параметры эффекта Доплера",IDC_Box2,517,8,117,36
     EDITTEXT        IDC_EDIT7,561,17,70,14,ES_AUTOHSCROLL
     LTEXT           "f Доплера:",IDC_STATIC,522,19,37,8
-    EDITTEXT        IDC_EDIT8,561,33,70,14,ES_AUTOHSCROLL
-    LTEXT           "alfa:",IDC_STATIC,544,35,14,8
-    CONTROL         "Вкл/Выкл",IDC_CHECK2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,562,49,47,10
+    CONTROL         "Вкл/Выкл",IDC_CHECK2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,562,32,47,10
     CONTROL         "",IDC_SIGNAL2,"Static",SS_BITMAP,7,122,13,11
     PUSHBUTTON      "Функция неопределённости для ППРЧ сигналов",IDC_BUTTON2,726,227,85,35,BS_MULTILINE
     CONTROL         "",IDC_SIGNAL3,"Static",SS_BITMAP,7,237,13,11

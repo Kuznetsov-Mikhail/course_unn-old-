@@ -68,7 +68,6 @@ public:
 	vector <vector<float>> ResearchRrr2D;
 	vector <pair<double,double>> veroiatnosti;
 	double f_dop;
-	double alfa;
 	BOOL Dopler_On;
 	afx_msg void OnBnClickedCheck1();
 	afx_msg void OnBnClickedButton2();

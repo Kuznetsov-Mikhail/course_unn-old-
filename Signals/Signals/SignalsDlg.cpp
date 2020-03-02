@@ -27,7 +27,6 @@ CSignalsDlg::CSignalsDlg(CWnd* pParent /*=nullptr*/)
 	, Signals_or_Spectrs(FALSE)
 	, noize_lvl(100)
 	, f_dop(30000)
-	, alfa(2e-05)
 	, Dopler_On(TRUE)
 	, scramble(TRUE)
 	, parallel(TRUE)
@@ -51,7 +50,6 @@ void CSignalsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_CHECK1, Signals_or_Spectrs);
 	DDX_Text(pDX, IDC_EDIT6, noize_lvl);
 	DDX_Text(pDX, IDC_EDIT7, f_dop);
-	DDX_Text(pDX, IDC_EDIT8, alfa);
 	DDX_Check(pDX, IDC_CHECK2, Dopler_On);
 	DDX_Check(pDX, IDC_CHECK3, scramble);
 	DDX_Check(pDX, IDC_CHECK4, parallel);
@@ -394,11 +392,8 @@ void CSignalsDlg::OnBnClickedButton1() //Генерация сигналов
 	ImSignal2Rch.clear();
 	ImSignal2Rch = ImSignal2;
 
-	if (Dopler_On)
-	{
-		sp.Dopler_scaling(ImSignal2, alfa);
-		sp.Dopler_shift(ImSignal2, f_dop);
-	}
+	if (Dopler_On)	sp.Dopler(ImSignal2, f_dop, sampling/2);
+
 	sp.addNoize(ImSignal2, noize_lvl);
 	sp.FAST_FUR(ImSignal1, ImSpectr1, -1);
 	sp.FAST_FUR(ImSignal2, ImSpectr2, -1);
@@ -675,11 +670,8 @@ void CSignalsDlg::OnBnClickedButton6()//Исследование
 			ImSignal2Rch.clear();
 			ImSignal2Rch = ImSignal2;
 
-			if (Dopler_On)
-			{
-				sp.Dopler_scaling(ImSignal2, alfa);
-				sp.Dopler_shift(ImSignal2, f_dop);
-			}
+			if (Dopler_On)	sp.Dopler(ImSignal2, f_dop, sampling / 2);
+
 			sp.addNoize(ImSignal2, noize_r);
 			sp.FAST_FUR(ImSignal1, ImSpectr1, -1);
 			sp.FAST_FUR(ImSignal2, ImSpectr2, -1);
