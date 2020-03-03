@@ -392,7 +392,7 @@ void CSignalsDlg::OnBnClickedButton1() //Генерация сигналов
 	ImSignal2Rch.clear();
 	ImSignal2Rch = ImSignal2;
 
-	if (Dopler_On)	sp.Dopler(ImSignal2, f_dop, sampling/2);
+	if (Dopler_On)	sp.Dopler(ImSignal2, f_dop, sp.average_frequency);
 
 	sp.addNoize(ImSignal2, noize_lvl);
 	sp.FAST_FUR(ImSignal1, ImSpectr1, -1);
@@ -670,7 +670,7 @@ void CSignalsDlg::OnBnClickedButton6()//Исследование
 			ImSignal2Rch.clear();
 			ImSignal2Rch = ImSignal2;
 
-			if (Dopler_On)	sp.Dopler(ImSignal2, f_dop, sampling / 2);
+			if (Dopler_On)	sp.Dopler(ImSignal2, f_dop, sp.average_frequency);
 
 			sp.addNoize(ImSignal2, noize_r);
 			sp.FAST_FUR(ImSignal1, ImSpectr1, -1);

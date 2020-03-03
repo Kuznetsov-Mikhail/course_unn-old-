@@ -49,6 +49,7 @@ public:
 	double V; //несуща€ частота
 	double delataW; // модулирующа€ частота
 	double sampling;// частота дискретизации
+	double average_frequency = 1087.5 * 1.e6;
 	double BrV; //bitrate
 	int bit_time;
 	const vector<int> operating_frequencies //частоты JTIDS в ћгц

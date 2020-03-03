@@ -331,6 +331,49 @@ void Signals_Processing::Uncertainty(vector<double>& mass, vector<complex<double
 }
 void Signals_Processing::Uncertainty_omp(vector<double>& mass, vector<complex<double>> Signal1, vector<complex<double>> Signal2, int ksum)
 {
+//	if (ksum == 0)
+//	{
+//		ksum = 1;
+//	}
+//	double localMax;
+//	int k = step2(Signal1.size());
+//	mass.resize(Signal1.size());
+//#pragma omp parallel for
+//	for (int i = 0; i < Signal1.size(); i++)
+//	{
+//		vector <complex<double>> Rrr; //вектор произведения С1 и С2		
+//		vector <complex<double>> RrrK;// суммирование Rrr по блокам ksum
+//		Rrr.resize(k);
+//#pragma omp parallel for
+//		for (int j = 0; j < Signal1.size(); j++)
+//		{
+//			if ((i + j) == Signal2.size())
+//			{
+//				break;
+//			}
+//			Rrr[j] = (Signal1[j] * conj(Signal2[j + i]));
+//		}
+//		int group = k / ksum;
+//		RrrK.clear();
+//		RrrK.resize(group);
+//#pragma omp parallel for
+//		for (int j = 0; j < group; j++)
+//		{
+//			complex <double> bufferSum = 0;
+//			for (int k = 0; k < ksum; k++)
+//			{
+//				bufferSum += Rrr[j * ksum + k];
+//			}
+//			RrrK[j] = bufferSum;
+//		}
+//		fur(RrrK, -1);
+//		mass[i] = 0;
+//		for (int j = 0; j < RrrK.size(); j++)
+//		{
+//			if (abs(RrrK[j]) > mass[i])mass[i] = abs(RrrK[j]);
+//		}
+//	}
+	///
 	if (ksum == 0)
 	{
 		ksum = 1;
@@ -341,42 +384,32 @@ void Signals_Processing::Uncertainty_omp(vector<double>& mass, vector<complex<do
 #pragma omp parallel for
 	for (int i = 0; i < Signal1.size(); i++)
 	{
-		vector <complex<double>> Rrr; //вектор произведения С1 и С2		
-		vector <complex<double>> RrrK;// суммирование Rrr по блокам ksum
-		Rrr.clear();
-		Rrr.resize(k);
-		int gran_size = Signal1.size() - i;
-		//for (int j = 0; j < gran_size; j++)
-		//{
-		//	Rrr[j] = (Signal1[j] * conj(Signal2[j + i]));
-		//}
+		vector <complex<double>> correlation; //вектор произведения С1 и С2		
+		vector <complex<double>> correlation_Kgroup;// суммирование correlation по блокам ksum
+		correlation.resize(k);
 #pragma omp parallel for
 		for (int j = 0; j < Signal1.size(); j++)
 		{
-			if ((i + j) == Signal2.size())
-			{
-				break;
-			}
-			Rrr[j] = (Signal1[j] * conj(Signal2[j + i]));
+			correlation[i] += (Signal1[j] * conj(Signal2[j + i]));
 		}
 		int group = k / ksum;
-		RrrK.clear();
-		RrrK.resize(group);
+		correlation_Kgroup.clear();
+		correlation_Kgroup.resize(group);
 #pragma omp parallel for
 		for (int j = 0; j < group; j++)
 		{
 			complex <double> bufferSum = 0;
 			for (int k = 0; k < ksum; k++)
 			{
-				bufferSum += Rrr[j * ksum + k];
+				bufferSum += correlation[j * ksum + k];
 			}
-			RrrK[j] = bufferSum;
+			correlation_Kgroup[j] = bufferSum;
 		}
-		fur(RrrK, -1);
+		fur(correlation_Kgroup, -1);
 		mass[i] = 0;
-		for (int j = 0; j < RrrK.size(); j++)
+		for (int j = 0; j < correlation_Kgroup.size(); j++)
 		{
-			if (abs(RrrK[j]) > mass[i])mass[i] = abs(RrrK[j]);
+			if (abs(correlation_Kgroup[j]) > mass[i])mass[i] = abs(correlation_Kgroup[j]);
 		}
 	}
 }
@@ -395,12 +428,14 @@ void Signals_Processing::Uncertainty_omp(vector<float>& mass, signal_buf& Signal
 	{
 		vector <complex<float>> Rrr; //вектор произведения С1 и С2		
 		vector <complex<double>> RrrK;// суммирование Rrr по блокам ksum
-		Rrr.clear();
 		Rrr.resize(k);
-		int gran_size = Signal1.size() - i;
 #pragma omp parallel for
-		for (int j = 0; j < gran_size; j++)
+		for (int j = 0; j < Signal1.size(); j++)
 		{
+			if ((i + j) == Signal2.size())
+			{
+				break;
+			}
 			Rrr[j] = (Signal1[j] * conj(Signal2[j + i]));
 		}
 		int group = k / ksum;
