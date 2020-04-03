@@ -308,13 +308,19 @@ void CSignalsDlg::ViewerDraw(vector<double>& data, int Xmax, CChartViewer& viewe
 	viewer_num.setChart(c);
 	delete c;
 }
-void CSignalsDlg::ViewerDraw(vector<double>& data, double Xmin, double Xmax, CChartViewer& viewer_num, string PathPic)
+void CSignalsDlg::ViewerDraw(vector<vector<double>>& data, double Xmin, double Xmax, CChartViewer& viewer_num, string PathPic)
 {
+	if (data.empty())return;
 	// In this example, we simply use random data for the 3 data series.
-	DoubleArray Arr_dataReal = vectorToArray(data);
+	vector<DoubleArray> Arr_dataReal; Arr_dataReal.resize(data.size());
+	for (int i = 0; i < data.size(); i++)
+	{
+		Arr_dataReal[i] = vectorToArray(data[i]);
+	}
+	
 	vector<double>Datatime;
 
-	double OXstep = (Xmax - Xmin) / (data.size()-1);
+	double OXstep = (Xmax - Xmin) / (data[0].size()-1);
 	for (double i = Xmin; i <= Xmax; i+= OXstep)Datatime.push_back(i);
 	DoubleArray timeStamps = vectorToArray(Datatime);
 
@@ -357,7 +363,14 @@ void CSignalsDlg::ViewerDraw(vector<double>& data, double Xmin, double Xmax, CCh
 	layer->setLineWidth(3);
 
 	// Add 3 data series to the line layer
-	layer->addDataSet(Arr_dataReal, 0x5588cc, "Real");
+	for (int i = 0; i < Arr_dataReal.size(); i++)
+	{
+		stringstream ss;
+		ss << "Data "<<i;
+		string name =ss.str();
+		unsigned int color = 0. + 16777216 * rand() / RAND_MAX;
+		layer->addDataSet(Arr_dataReal[i], color,name.c_str());
+	}	
 	// The x-coordinates for the line layer
 	layer->setXData(timeStamps);
 	viewer_num.setChart(c);
@@ -395,8 +408,13 @@ void CSignalsDlg::OnBnClickedButton1() //Генерация сигналов
 	if (Dopler_On)	sp.Dopler(ImSignal2, f_dop, sp.average_frequency);
 
 	sp.addNoize(ImSignal2, noize_lvl);
-	sp.FAST_FUR(ImSignal1, ImSpectr1, -1);
-	sp.FAST_FUR(ImSignal2, ImSpectr2, -1);
+	ImSpectr1 = ImSignal1;
+	ImSpectr2 = ImSignal2;
+	sp.FAST_FUR(ImSignal1, ImSpectr1, -1); 
+	sp.FAST_FUR(ImSignal2, ImSpectr2, -1); 
+
+	//sp.fft_complex(ImSpectr1);
+	//sp.fft_complex(ImSpectr2);
 	sp.spVertex(ImSpectr1);
 	sp.spVertex(ImSpectr2);
 	OnBnClickedCheck1();
@@ -465,7 +483,7 @@ void CSignalsDlg::OnBnClickedButton5() //Функция Uncertainty OMP
 	ResearchRrr.clear();
 
 	auto start = steady_clock::now();
-	sp.Uncertainty_omp(ResearchRrr, ImSignal1, ImSignal2, 8);
+	sp.Uncertainty_ipp(ResearchRrr, ImSignal1, ImSignal2, 8);
 	auto end = steady_clock::now();
 	auto elapsed = duration_cast<milliseconds>(end - start);
 	test_time_cr = elapsed.count();
@@ -518,9 +536,13 @@ void CSignalsDlg::OnBnClickedButton2() //ФН для ППРЧ сигналов
 	{		
 		vector <complex<double>> ImSpectr1_local;
 		vector <complex<double>> ImSpectr2_local;
-
+		//ImSpectr1_local=ImSignal1;
+		//ImSpectr2_local=ImSignal2;
+		//sp.fft_complex(ImSpectr1_local);
+		//sp.fft_complex(ImSpectr2_local);
 		sp.FAST_FUR(ImSignal1, ImSpectr1_local, -1);
 		sp.FAST_FUR(ImSignal2, ImSpectr2_local, -1);
+		
 
 		sp.spVertex(ImSpectr1_local);
 		sp.spVertex(ImSpectr2_local);
@@ -585,12 +607,12 @@ void CSignalsDlg::OnBnClickedButton2() //ФН для ППРЧ сигналов
 		signal_buf signal2;
 		for (int i = 0; i < ImSignal1.size(); i++)
 		{
-			complex<float> buf; buf = ImSignal1[i].real() + Comj * ImSignal1[i].imag();
+			complex<float> buf; buf = ImSignal1[i].real() + comj * ImSignal1[i].imag();
 			signal1.push_back(buf);
 		}
 		for (int i = 0; i < ImSignal2.size(); i++)
 		{
-			complex<float> buf; buf = ImSignal2[i].real() + Comj * ImSignal2[i].imag();
+			complex<float> buf; buf = ImSignal2[i].real() + comj * ImSignal2[i].imag();
 			signal2.push_back(buf);
 		}
 		//////////////////// fast_convolution
@@ -641,15 +663,19 @@ void CSignalsDlg::OnBnClickedButton6()//Исследование
 {
 	UpdateData(1);
 	SetCursor(LoadCursor(nullptr, IDC_WAIT));
-	veroiatnosti.clear();
-	double noize_min_r = -30;
-	double noize_max_r = -20;
-	int noize_dots_r = 5;
+	veroiatnosti_fhss.clear();
+	veroiatnosti_un.clear();
+	double noize_min_r = -20;
+	double noize_max_r = -10;
+	int noize_dots_r = 10;
 	double noize_step_r = (noize_max_r - noize_min_r) / (noize_dots_r-1);
-	vector<double> assessments;
-	assessments.resize(noize_dots_r);
-	veroiatnosti.resize(noize_dots_r);
-	int runs = 10; //кол-во прогонов для одной велечины шума
+	vector<double> assessments_fhss;
+	vector<double> assessments_un;
+	assessments_fhss.resize(noize_dots_r);
+	veroiatnosti_fhss.resize(noize_dots_r);
+	assessments_un.resize(noize_dots_r);
+	veroiatnosti_un.resize(noize_dots_r);
+	int runs = 20; //кол-во прогонов для одной велечины шума
 
 	Prog_bar.SetRange(0, runs);
 	Prog_bar.SetPos(0);
@@ -675,6 +701,7 @@ void CSignalsDlg::OnBnClickedButton6()//Исследование
 			sp.addNoize(ImSignal2, noize_r);
 			sp.FAST_FUR(ImSignal1, ImSpectr1, -1);
 			sp.FAST_FUR(ImSignal2, ImSpectr2, -1);
+
 			sp.spVertex(ImSpectr1);
 			sp.spVertex(ImSpectr2);
 			/////////////////////////////////////////////////
@@ -683,19 +710,19 @@ void CSignalsDlg::OnBnClickedButton6()//Исследование
 			signal_buf signal2;
 			for (int i = 0; i < ImSignal1.size(); i++)
 			{
-				complex<float> buf; buf = ImSignal1[i].real() + Comj * ImSignal1[i].imag();
+				complex<float> buf; buf = ImSignal1[i].real() + comj * ImSignal1[i].imag();
 				signal1.push_back(buf);
 			}
 			for (int i = 0; i < ImSignal2.size(); i++)
 			{
-				complex<float> buf; buf = ImSignal2[i].real() + Comj * ImSignal2[i].imag();
+				complex<float> buf; buf = ImSignal2[i].real() + comj * ImSignal2[i].imag();
 				signal2.push_back(buf);
 			}
 			//////////////////// fast_convolution
 			fast_convolution(signal1, sp.fir_s, sp.FHSS_Signals_initial_fl, GPU_FD);
-			Prog_bar.SetPos(25);
+			Prog_bar.SetPos(runs/2);
 			fast_convolution(signal2, sp.fir_s, sp.FHSS_Signals_fl, GPU_FD);
-			Prog_bar.SetPos(50);
+			Prog_bar.SetPos(runs);
 			ResearchRrr.clear();
 			ResearchRrr2D.clear();
 			ResearchRrr2D.resize(sp.operating_frequencies.size());
@@ -703,7 +730,7 @@ void CSignalsDlg::OnBnClickedButton6()//Исследование
 			for (int i = 0; i < sp.operating_frequencies.size(); i++)
 			{
 				vector<float>buffer;
-				sp.Uncertainty_omp(buffer, sp.FHSS_Signals_initial_fl[i], sp.FHSS_Signals_fl[i], 4);
+				sp.Uncertainty_omp(buffer, sp.FHSS_Signals_initial_fl[i], sp.FHSS_Signals_fl[i], 16);
 				ResearchRrr2D[i] = buffer;
 			}
 			ResearchRrr.resize(ResearchRrr2D[0].size());
@@ -732,25 +759,46 @@ void CSignalsDlg::OnBnClickedButton6()//Исследование
 			ViewerDraw(ResearchRrr, ResearchRrr.size(), viewer3);
 			/////////////////////////////////////////////////
 			double expected_delay = delay_size * sp.bit_time;
-			assessments[i] += pow((expected_delay - delay_lama_r), 2);
+			assessments_fhss[i] += pow((expected_delay - delay_lama_r), 2);
 			/////////////////////////////////////////////////
 			double deltadelay = abs(expected_delay - delay_lama_r);
-			if (deltadelay < (double(sp.bit_time) / 2)) veroiatnosti[i].second += 1;
+			if (deltadelay < (double(sp.bit_time) / 2)) veroiatnosti_fhss[i].second += 1;
+			//////////////////////////////////////////////////
+			sp.Uncertainty_omp(ResearchRrr, ImSignal1, ImSignal2, 8);
+			if (ResearchRrr.size() != NULL)
+			{
+				double buff_ResearchRrr = 0;
+				for (int i = 0; i < ResearchRrr.size(); i++)
+				{
+					if (ResearchRrr[i] > buff_ResearchRrr)
+					{
+						buff_ResearchRrr = ResearchRrr[i]; delay_lama = i;
+					}
+				}
+			}
+			delay_lama_r = delay_lama;
+			delay_lama = int((double)delay_lama / sp.bit_time);
+			deltadelay = abs(expected_delay - delay_lama_r);
+			if (deltadelay < (double(sp.bit_time) / 2)) veroiatnosti_un[i].second += 1;
+			//////////////////////////////////////////////////
 			Prog_bar.SetPos(j+1);
 		}
-		assessments[i] /= runs;
-		veroiatnosti[i].second /= runs;
-		veroiatnosti[i].first = noize_r;
+		assessments_fhss[i] /= runs;
+		veroiatnosti_fhss[i].second /= runs;
+		veroiatnosti_fhss[i].first = noize_r;
+		veroiatnosti_un[i].second /= runs;
+		veroiatnosti_un[i].first = noize_r;
 		ProgBarRes.SetPos(i+1);
 	}
 	//double test_pic = 1.2345;
 	//string str = convertToStrPng<double>(&test_pic);
-	ViewerDraw(assessments, noize_min_r, noize_max_r, viewer3, "assessments.png");
-	vectorDoubleToFile(veroiatnosti, "veroiatnosti.txt");
-	vector<double> veroiatnosti_help;
-	for (int i=0;i<veroiatnosti.size();i++)
+	//ViewerDraw(assessments_fhss, noize_min_r, noize_max_r, viewer3, "assessments.png");
+	vectorDoubleToFile(veroiatnosti_fhss, "veroiatnosti.txt");
+	vector<vector<double>> veroiatnosti_help; veroiatnosti_help.resize(2);
+	for (int i=0;i<veroiatnosti_fhss.size();i++)
 	{
-		veroiatnosti_help.push_back(veroiatnosti[i].second);
+		veroiatnosti_help[0].push_back(veroiatnosti_fhss[i].second);
+		veroiatnosti_help[1].push_back(veroiatnosti_un[i].second);
 	}
 	ViewerDraw(veroiatnosti_help, noize_min_r, noize_max_r, viewer3, "veroiatnosti.png");
 	SetCursor(LoadCursor(nullptr, IDC_ARROW));

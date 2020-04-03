@@ -3,9 +3,16 @@
 #include <chrono>
 #include <omp.h>
 #include "fast_convolution.h"
+#include <map>
+
+#include <../../../../../IntelSWTools/compilers_and_libraries_2020.0.166/windows/ipp/include/ipp.h>
+#include <../../../../../IntelSWTools/compilers_and_libraries_2020.0.166/windows/ipp/include/ipps.h>
+#include <../../../../../IntelSWTools/compilers_and_libraries_2020.0.166/windows/ipp/include/ippcore.h>
+#include <../../../../../IntelSWTools/compilers_and_libraries_2020.0.166/windows/ipp/include/ippvm.h>
+//#include <../../../../../IntelSWTools/compilers_and_libraries_2020.0.166/windows/mkl/include/mkl.h>
 //#include "cubic.h"
 #define M_PI 3.1415926535
-#define Comj complex<double>(0,1)
+#define comj complex<double>(0,1)
 
 
 using namespace std;
@@ -17,7 +24,7 @@ class Signals_Processing
 	{
 		double s = ((massx[i + 1] - x) * (massx[i + 1] - x) * (2 * (x - massx[i]) + h) * massy[i]) / (h * h * h) + ((x - massx[i]) *
 			(x - massx[i]) * (2 * (massx[i + 1] - x) + h) * massy[i + 1]) / (h * h * h) + ((massx[i + 1] - x) * (massx[i + 1] - x) *
-			(x - massx[i]) * mit[i]) / (h * h) + ((x - massx[i]) * (x - massx[i]) * (x - massx[i + 1]) * mit[i + 1]) / (h * h);
+				(x - massx[i]) * mit[i]) / (h * h) + ((x - massx[i]) * (x - massx[i]) * (x - massx[i + 1]) * mit[i + 1]) / (h * h);
 		return s;
 	}
 	int step2(int sizein);//возвращает ближайшее значение pow(2,n)
@@ -40,6 +47,7 @@ class Signals_Processing
 	int pseudo_bit(int start, int end);//выбор псевдо случайного номера частоты
 
 	void fur(vector <complex<double>>& data, int is);//чистый фурье
+	void fur(vector <complex<float>>& data, int is);//чистый фурье
 
 public:
 	Signals_Processing();
@@ -84,7 +92,7 @@ public:
 
 	void FAST_FUR(vector <complex<double>> Signal, vector <complex<double>>& Spectr, bool is);
 	void spVertex(vector <complex<double>>& Spectr);
-	
+
 	/**
 	Функция генерации двух сигналов ППРЧ+MSK(дивиация частоты)
 	Рабочие частоты - 51 частота JTIDS
@@ -113,8 +121,8 @@ public:
 	bank_buf FHSS_Signals_fl;
 	bank_buf FHSS_Signals_initial_fl;
 	bank_buf fir_s;
-
-
 	double peak_intensity(vector<double> mas);	//Выраженность максимума по безразмерному критерию
+
+	void Uncertainty_ipp(vector<double>& mass, vector<complex<double>> Signal1, vector<complex<double>> Signal2, int ksum);
 };
 

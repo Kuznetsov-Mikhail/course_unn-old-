@@ -44,7 +44,7 @@ public:
 	void ViewerDraw(vector<complex<double>>& data, int Xmax, CChartViewer& viewer_num);
 	void ViewerDrawSpectrum(vector<double>& data, int Xmax, CChartViewer& viewer_num);
 	void ViewerDraw(vector<double>& data, int Xmax, CChartViewer& viewer_num);
-	void ViewerDraw(vector<double>& data, double Xmin, double Xmax, CChartViewer& viewer_num, string PathPic);
+	void ViewerDraw(vector<vector<double>>& data, double Xmin, double Xmax, CChartViewer& viewer_num, string PathPic);
 	afx_msg void OnBnClickedCancel();
 	double bitrate;
 	double sampling;
@@ -66,7 +66,8 @@ public:
 	vector <double> Rrr;
 	vector <double> ResearchRrr;
 	vector <vector<float>> ResearchRrr2D;
-	vector <pair<double,double>> veroiatnosti;
+	vector <pair<double,double>> veroiatnosti_fhss;
+	vector <pair<double, double>> veroiatnosti_un;
 	double f_dop;
 	BOOL Dopler_On;
 	afx_msg void OnBnClickedCheck1();
