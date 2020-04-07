@@ -330,6 +330,7 @@ void Signals_Processing::Uncertainty(vector<double>& mass, vector<complex<double
 		mass.push_back(localMax);
 	}
 }
+
 void Signals_Processing::Uncertainty_ipp(vector<double>& mass, vector<complex<double>> Signal1, vector<complex<double>> Signal2, int ksum)
 {
 	if (ksum == 0)
@@ -349,23 +350,39 @@ void Signals_Processing::Uncertainty_ipp(vector<double>& mass, vector<complex<do
 		pVec1[j].re = Signal1[j].real();
 		pVec1[j].im = Signal1[j].imag();
 	}
-#pragma omp parallel for
+	Ipp64fc* pVec2 = ippsMalloc_64fc(local_signal_size);
+	Ipp64fc* correlation_Kgroup = ippsMalloc_64fc(group);// суммирование correlation по блокам ksum
+	Ipp64f* correlation_Kgroup_abs = ippsMalloc_64f(group);// суммирование correlation по блокам ksum
+	Ipp64fc* correlation = ippsMalloc_64fc(local_signal_size); //вектор произведения С1 и С2
+
+	//for fft
+	// Query to get buffer sizes
+	int sizeFFTSpec, sizeFFTInitBuf, sizeFFTWorkBuf;
+	int order = (int)(log((double)group) / log(2.0));
+	ippsFFTGetSize_C_64fc(order, IPP_FFT_NODIV_BY_ANY,
+		ippAlgHintAccurate, &sizeFFTSpec, &sizeFFTInitBuf, &sizeFFTWorkBuf);
+	// Alloc FFT buffers
+	IppsFFTSpec_C_64fc* pFFTSpec = 0;
+	Ipp8u* pFFTSpecBuf, * pFFTInitBuf, * pFFTWorkBuf;
+	pFFTSpecBuf = ippsMalloc_8u(sizeFFTSpec);
+	pFFTInitBuf = ippsMalloc_8u(sizeFFTInitBuf);
+	pFFTWorkBuf = ippsMalloc_8u(sizeFFTWorkBuf);
+	// Initialize FFT
+	ippsFFTInit_C_64fc(&pFFTSpec, order, IPP_FFT_NODIV_BY_ANY,
+		ippAlgHintAccurate, pFFTSpecBuf, pFFTInitBuf);
+	////
+//#pragma omp parallel for
 	for (int i = 0; i < local_signal_size; i++)
 	{
-		Ipp64fc* correlation_Kgroup = ippsMalloc_64fc(group);// суммирование correlation по блокам ksum
-		Ipp64fc* correlation = ippsMalloc_64fc(local_signal_size); //вектор произведения С1 и С2			
-
-		// Allocate complex buffers
-
-		Ipp64fc* pVec2 = ippsMalloc_64fc(local_signal_size);
 #pragma omp parallel for
 		for (int j = 0; j < local_signal_size; j++)
 		{
 			pVec2[j].re = Signal2[j + i].real();
-			pVec2[j].im = -Signal2[j + i].imag();
+			pVec2[j].im = Signal2[j + i].imag();
 		}
+		ippsConj_64fc_I(pVec2, local_signal_size);
 		ippsMul_64fc(pVec1, pVec2, correlation, local_signal_size);
-		ippFree(pVec2);
+
 #pragma omp parallel for
 		for (int j = 0; j < group; j++)
 		{
@@ -378,34 +395,21 @@ void Signals_Processing::Uncertainty_ipp(vector<double>& mass, vector<complex<do
 			}
 			correlation_Kgroup[j] = bufferSum;
 		}
-		// Query to get buffer sizes
-		int sizeFFTSpec, sizeFFTInitBuf, sizeFFTWorkBuf;
-		int order = (int)(log((double)group) / log(2.0));
-		ippsFFTGetSize_C_64fc(order, IPP_FFT_NODIV_BY_ANY,
-			ippAlgHintAccurate, &sizeFFTSpec, &sizeFFTInitBuf, &sizeFFTWorkBuf);
-		// Alloc FFT buffers
-		IppsFFTSpec_C_64fc* pFFTSpec = 0;
-		Ipp8u* pFFTSpecBuf, * pFFTInitBuf, * pFFTWorkBuf;
-		pFFTSpecBuf = ippsMalloc_8u(sizeFFTSpec);
-		pFFTInitBuf = ippsMalloc_8u(sizeFFTInitBuf);
-		pFFTWorkBuf = ippsMalloc_8u(sizeFFTWorkBuf);
-		// Initialize FFT
-		ippsFFTInit_C_64fc(&pFFTSpec, order, IPP_FFT_NODIV_BY_ANY,
-			ippAlgHintAccurate, pFFTSpecBuf, pFFTInitBuf);
-		if (pFFTInitBuf) ippFree(pFFTInitBuf);
 		// Do the FFT
 		ippsFFTFwd_CToC_64fc(correlation_Kgroup, correlation_Kgroup, pFFTSpec, pFFTWorkBuf);
-		if (pFFTWorkBuf) ippFree(pFFTWorkBuf);
-		if (pFFTSpecBuf) ippFree(pFFTSpecBuf);
+		ippsMagnitude_64fc(correlation_Kgroup, correlation_Kgroup_abs, group);
 		mass[i] = 0;
-		for (int j = 0; j < group; j++)
-		{
-			double abbs = sqrt(pow(correlation_Kgroup[j].re, 2) + pow(correlation_Kgroup[j].im, 2));
-			if (abbs > mass[i]) mass[i] = abbs;
-		}
-		ippFree(correlation);
-		ippFree(correlation_Kgroup);
+		Ipp64f imax;
+		ippsMax_64f(correlation_Kgroup_abs, group, &imax);
+		mass[i] = imax;
 	}
+	if (pFFTInitBuf) ippFree(pFFTInitBuf);
+	if (pFFTWorkBuf) ippFree(pFFTWorkBuf);
+	if (pFFTSpecBuf) ippFree(pFFTSpecBuf);
+	ippFree(correlation);
+	ippFree(correlation_Kgroup);
+	ippFree(correlation_Kgroup_abs);
+	ippFree(pVec2);
 	ippFree(pVec1);
 }
 void Signals_Processing::Uncertainty_omp(vector<double>& mass, vector<complex<double>> Signal1, vector<complex<double>> Signal2, int ksum)
