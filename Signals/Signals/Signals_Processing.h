@@ -122,7 +122,6 @@ public:
 	bank_buf FHSS_Signals_initial_fl;
 	bank_buf fir_s;
 	double peak_intensity(vector<double> mas);	//Выраженность максимума по безразмерному критерию
-
-	void Uncertainty_ipp(vector<double>& mass, vector<complex<double>> Signal1, vector<complex<double>> Signal2, int ksum);
+	void Uncertainty_ipp(vector<float>& mass, vector<complex<float>> Signal1, vector<complex<float>> Signal2, int ksum);
 };
 

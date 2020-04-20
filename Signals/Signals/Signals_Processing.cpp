@@ -331,7 +331,7 @@ void Signals_Processing::Uncertainty(vector<double>& mass, vector<complex<double
 	}
 }
 
-void Signals_Processing::Uncertainty_ipp(vector<double>& mass, vector<complex<double>> Signal1, vector<complex<double>> Signal2, int ksum)
+void Signals_Processing::Uncertainty_ipp(vector<float>& mass, vector<complex<float>> Signal1, vector<complex<float>> Signal2, int ksum)
 {
 	if (ksum == 0)
 	{

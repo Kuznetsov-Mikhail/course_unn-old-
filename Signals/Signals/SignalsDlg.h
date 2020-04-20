@@ -81,6 +81,7 @@ public:
 	afx_msg void OnBnClickedButton4();
 	afx_msg void OnBnClickedButton5();
 	afx_msg void OnBnClickedButton6();
+	afx_msg void OnBnClickedButton7();
 	////////////////////////////////////////////
 	/*template <class T>
 	bool convertFromStr(string& str, T* var) {
@@ -122,4 +123,21 @@ public:
 	}
 	BOOL Signals_generator_type;
 	int test_time_cr;
+	void Signals_Gen(int bits_size,int delay_size, double noize_v)
+	{
+		updateSP();
+		ResearchRrr.clear();
+		ImSpectr1.clear();
+		ImSpectr2.clear();
+		if (Signals_generator_type) sp.Link16_Signals_Generator(ImSignal1, ImSignal2, bits_size, delay_size, scramble);
+		else sp.Simple_Signals_Generator(ImSignal1, ImSignal2, bits_size, delay_size);
+		ImSignal2Rch.clear();
+		ImSignal2Rch = ImSignal2;
+		if (Dopler_On)	sp.Dopler(ImSignal2, f_dop, sp.average_frequency);
+		sp.addNoize(ImSignal2, noize_v);
+		sp.FAST_FUR(ImSignal1, ImSpectr1, -1);
+		sp.FAST_FUR(ImSignal2, ImSpectr2, -1);
+		sp.spVertex(ImSpectr1);
+		sp.spVertex(ImSpectr2);
+	}
 };
