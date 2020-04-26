@@ -29,9 +29,9 @@ CSignalsDlg::CSignalsDlg(CWnd* pParent /*=nullptr*/)
 	, f_dop(30000)
 	, Dopler_On(TRUE)
 	, scramble(TRUE)
-	, parallel(TRUE)
 	, Signals_generator_type(TRUE)
 	, test_time_cr(0)
+	, _k(8)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -52,11 +52,9 @@ void CSignalsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT7, f_dop);
 	DDX_Check(pDX, IDC_CHECK2, Dopler_On);
 	DDX_Check(pDX, IDC_CHECK3, scramble);
-	DDX_Check(pDX, IDC_CHECK4, parallel);
-	DDX_Control(pDX, IDC_PROGRESS1, Prog_bar);
-	DDX_Control(pDX, IDC_PROGRESS2, ProgBarRes);
 	DDX_Check(pDX, IDC_CHECK5, Signals_generator_type);
 	DDX_Text(pDX, IDC_EDIT9, test_time_cr);
+	DDX_Text(pDX, IDC_EDIT8, _k);
 }
 
 BEGIN_MESSAGE_MAP(CSignalsDlg, CDialogEx)
@@ -71,6 +69,8 @@ BEGIN_MESSAGE_MAP(CSignalsDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON5, &CSignalsDlg::OnBnClickedButton5)
 	ON_BN_CLICKED(IDC_BUTTON6, &CSignalsDlg::OnBnClickedButton6)
 	ON_BN_CLICKED(IDC_BUTTON7, &CSignalsDlg::OnBnClickedButton7)
+	ON_BN_CLICKED(IDC_BUTTON8, &CSignalsDlg::OnBnClickedButton8)
+	ON_BN_CLICKED(IDC_BUTTON9, &CSignalsDlg::OnBnClickedButton9)
 END_MESSAGE_MAP()
 
 
@@ -89,8 +89,6 @@ BOOL CSignalsDlg::OnInitDialog()
 	ViewerDraw(ImSignal2, ImSignal2.size(), viewer2);
 	ViewerDraw(ResearchRrr, ResearchRrr.size(), viewer3);
 	// TODO: добавьте дополнительную инициализацию
-	Prog_bar.SetRange(0, 50);
-	Prog_bar.SetPos(0);
 	return TRUE;  // возврат значения TRUE, если фокус не передан элементу управления
 }
 
@@ -439,7 +437,7 @@ void CSignalsDlg::OnBnClickedButton3()//Функция Uncertainty
 	updateSP();
 	ResearchRrr.clear();
 	auto start = steady_clock::now();
-	sp.Uncertainty(ResearchRrr, ImSignal1, ImSignal2, 8);
+	sp.Uncertainty(ResearchRrr, ImSignal1, ImSignal2, _k);
 	auto end = steady_clock::now();
 	auto elapsed = duration_cast<milliseconds>(end - start);
 	test_time_cr = elapsed.count();
@@ -469,7 +467,37 @@ void CSignalsDlg::OnBnClickedButton5()
 	ResearchRrr.clear();
 
 	auto start = steady_clock::now();
-	sp.Uncertainty_omp(ResearchRrr, ImSignal1, ImSignal2, 8);
+	sp.Uncertainty_omp(ResearchRrr, ImSignal1, ImSignal2, _k);
+	auto end = steady_clock::now();
+	auto elapsed = duration_cast<milliseconds>(end - start);
+	test_time_cr = elapsed.count();
+	if (ResearchRrr.size() != NULL)
+	{
+		double buff_ResearchRrr = 0;
+		for (int i = 0; i < ResearchRrr.size(); i++)
+		{
+			if (ResearchRrr[i] > buff_ResearchRrr)
+			{
+				buff_ResearchRrr = ResearchRrr[i]; delay_lama = i;
+			}
+		}
+	}
+	delay_lama = int((double)delay_lama / sp.bit_time);
+	ViewerDraw(ResearchRrr, ResearchRrr.size(), viewer3);
+	SetCursor(LoadCursor(nullptr, IDC_ARROW));
+	UpdateData(FALSE);
+}
+
+//Функция Uncertainty IPP
+void CSignalsDlg::OnBnClickedButton9()
+{
+	UpdateData(TRUE);
+	SetCursor(LoadCursor(nullptr, IDC_WAIT));
+	updateSP();
+	ResearchRrr.clear();
+
+	auto start = steady_clock::now();
+	sp.Uncertainty_ipp(ResearchRrr, ImSignal1, ImSignal2, _k);
 	auto end = steady_clock::now();
 	auto elapsed = duration_cast<milliseconds>(end - start);
 	test_time_cr = elapsed.count();
@@ -506,9 +534,7 @@ void CSignalsDlg::OnBnClickedButton4()
 		//double trans_zone = (sp.BrV / 8.) * (3./2.); /// ПОЧЕМУ!!!! НЕ РАБОТАЕТ ПРИ sp.BrV / 8.
 		double trans_zone = (sp.BrV / 4.);
 		CreateFirFilter(freq1, freq2, trans_zone, sampling, sp.fir_s[i]);
-		Prog_bar.SetPos(i + 1);
 	}
-	Prog_bar.SetPos(0);
 	SetCursor(LoadCursor(nullptr, IDC_ARROW));
 	UpdateData(FALSE);
 }
@@ -518,63 +544,9 @@ void CSignalsDlg::OnBnClickedButton2()
 {
 	UpdateData(TRUE);
 	SetCursor(LoadCursor(nullptr, IDC_WAIT));
-	Prog_bar.SetRange(0, 50);
-	Prog_bar.SetPos(0);
 	updateSP();
-
-	//////////////////// Подготовка входных сигналов
-	signal_buf signal1;
-	signal_buf signal2;
-	for (int i = 0; i < ImSignal1.size(); i++)
-	{
-		complex<float> buf; buf = ImSignal1[i].real() + comj * ImSignal1[i].imag();
-		signal1.push_back(buf);
-	}
-	for (int i = 0; i < ImSignal2.size(); i++)
-	{
-		complex<float> buf; buf = ImSignal2[i].real() + comj * ImSignal2[i].imag();
-		signal2.push_back(buf);
-	}
-	//////////////////// fast_convolution
-	fast_convolution(signal1, sp.fir_s, sp.FHSS_Signals_initial_fl, GPU_FD);
-	Prog_bar.SetPos(25);
-	fast_convolution(signal2, sp.fir_s, sp.FHSS_Signals_fl, GPU_FD);
-	Prog_bar.SetPos(50);
-	ResearchRrr.clear();
-	ResearchRrr2D.clear();
-	ResearchRrr2D.resize(sp.operating_frequencies.size());
-#pragma omp parallel for
-	for (int i = 0; i < sp.operating_frequencies.size(); i++)
-	{
-		vector<float>buffer;
-		sp.Uncertainty_ipp(buffer, sp.FHSS_Signals_initial_fl[i], sp.FHSS_Signals_fl[i], 16);
-		ResearchRrr2D[i] = buffer;
-		//Prog_bar.SetPos(i+1);
-	}
-	ResearchRrr.resize(ResearchRrr2D[0].size());
-	for (int j = 0; j < sp.operating_frequencies.size(); j++)
-	{
-		for (int i = 0; i < ResearchRrr.size(); i++)
-		{
-			ResearchRrr[i] += ResearchRrr2D[j][i];
-		}
-	}
-	if (ResearchRrr.size() != NULL)
-	{
-		double buff_ResearchRrr = 0;
-		for (int i = 0; i < ResearchRrr.size(); i++)
-		{
-			if (ResearchRrr[i] > buff_ResearchRrr)
-			{
-				buff_ResearchRrr = ResearchRrr[i]; delay_lama = i;
-			}
-		}
-	}
-	delay_lama = int((double)delay_lama / sp.bit_time);
-	sp.FHSS_Signals_initial_fl.clear();
-	sp.FHSS_Signals_fl.clear();
+	sp.Uncertainty_ipp_jtids(delay_size, ImSignal1, ImSignal2, _k, ResearchRrr, ResearchRrr2D, delay_lama);
 	ViewerDraw(ResearchRrr, ResearchRrr.size(), viewer3);
-
 	SetCursor(LoadCursor(nullptr, IDC_ARROW));
 	UpdateData(FALSE);
 }
@@ -597,11 +569,6 @@ void CSignalsDlg::OnBnClickedButton6()
 	assessments_un.resize(noize_dots_r);
 	veroiatnosti_un.resize(noize_dots_r);
 	int runs = 20; //кол-во прогонов для одной велечины шума
-
-	Prog_bar.SetRange(0, runs);
-	Prog_bar.SetPos(0);
-	ProgBarRes.SetRange(0, noize_dots_r - 1);
-	ProgBarRes.SetPos(0);
 	for (int i = 0; i < noize_dots_r; i++)
 	{
 		double noize_r = noize_min_r + i * noize_step_r;
@@ -615,19 +582,17 @@ void CSignalsDlg::OnBnClickedButton6()
 			signal_buf signal2;
 			for (int i = 0; i < ImSignal1.size(); i++)
 			{
-				complex<float> buf; buf = ImSignal1[i].real() + comj * ImSignal1[i].imag();
+				complex<float> buf; buf = ImSignal1[i].real() + comjd * ImSignal1[i].imag();
 				signal1.push_back(buf);
 			}
 			for (int i = 0; i < ImSignal2.size(); i++)
 			{
-				complex<float> buf; buf = ImSignal2[i].real() + comj * ImSignal2[i].imag();
+				complex<float> buf; buf = ImSignal2[i].real() + comjd * ImSignal2[i].imag();
 				signal2.push_back(buf);
 			}
 			//////////////////// fast_convolution
 			fast_convolution(signal1, sp.fir_s, sp.FHSS_Signals_initial_fl, GPU_FD);
-			Prog_bar.SetPos(runs / 2);
 			fast_convolution(signal2, sp.fir_s, sp.FHSS_Signals_fl, GPU_FD);
-			Prog_bar.SetPos(runs);
 			ResearchRrr.clear();
 			ResearchRrr2D.clear();
 			ResearchRrr2D.resize(sp.operating_frequencies.size());
@@ -635,7 +600,7 @@ void CSignalsDlg::OnBnClickedButton6()
 			for (int i = 0; i < sp.operating_frequencies.size(); i++)
 			{
 				vector<float>buffer;
-				sp.Uncertainty_omp(buffer, sp.FHSS_Signals_initial_fl[i], sp.FHSS_Signals_fl[i], 16);
+				sp.Uncertainty_omp(buffer, sp.FHSS_Signals_initial_fl[i], sp.FHSS_Signals_fl[i], _k);
 				ResearchRrr2D[i] = buffer;
 			}
 			ResearchRrr.resize(ResearchRrr2D[0].size());
@@ -669,7 +634,7 @@ void CSignalsDlg::OnBnClickedButton6()
 			double deltadelay = abs(expected_delay - delay_lama_r);
 			if (deltadelay < (double(sp.bit_time) / 2)) veroiatnosti_fhss[i].second += 1;
 			//////////////////////////////////////////////////
-			sp.Uncertainty_omp(ResearchRrr, ImSignal1, ImSignal2, 8);
+			sp.Uncertainty_omp(ResearchRrr, ImSignal1, ImSignal2, _k);
 			if (ResearchRrr.size() != NULL)
 			{
 				double buff_ResearchRrr = 0;
@@ -686,14 +651,12 @@ void CSignalsDlg::OnBnClickedButton6()
 			deltadelay = abs(expected_delay - delay_lama_r);
 			if (deltadelay < (double(sp.bit_time) / 2)) veroiatnosti_un[i].second += 1;
 			//////////////////////////////////////////////////
-			Prog_bar.SetPos(j + 1);
 		}
 		assessments_fhss[i] /= runs;
 		veroiatnosti_fhss[i].second /= runs;
 		veroiatnosti_fhss[i].first = noize_r;
 		veroiatnosti_un[i].second /= runs;
 		veroiatnosti_un[i].first = noize_r;
-		ProgBarRes.SetPos(i + 1);
 	}
 	//double test_pic = 1.2345;
 	//string str = convertToStrPng<double>(&test_pic);
@@ -720,9 +683,9 @@ void CSignalsDlg::OnBnClickedButton7()
 	times.resize(3); //0-noMod 1-ompMod 2-ippMod
 
 	int size_start = 10;
-	int size_stop = size_start + 1000;
-	int size_step = (size_stop - size_start) / 10;
-	int povtor = 10;
+	int size_stop = size_start + 100;
+	int size_step = (size_stop - size_start) / 5;
+	int povtor = 1;
 	for (int i = size_start; i < size_stop; i += size_step)
 	{
 		u_int64 buffer_time = 0;
@@ -731,7 +694,7 @@ void CSignalsDlg::OnBnClickedButton7()
 			Signals_Gen(i, i / 5, noize_lvl);
 			ResearchRrr.clear();
 			auto start = steady_clock::now();
-			sp.Uncertainty(ResearchRrr, ImSignal1, ImSignal2, 4);
+			sp.Uncertainty(ResearchRrr, ImSignal1, ImSignal2, _k);
 			auto end = steady_clock::now();
 			auto elapsed = duration_cast<milliseconds>(end - start);
 			buffer_time += elapsed.count();
@@ -747,7 +710,7 @@ void CSignalsDlg::OnBnClickedButton7()
 			Signals_Gen(i, i / 5, noize_lvl);
 			ResearchRrr.clear();
 			auto start = steady_clock::now();
-			sp.Uncertainty_omp(ResearchRrr, ImSignal1, ImSignal2, 4);
+			sp.Uncertainty_omp(ResearchRrr, ImSignal1, ImSignal2, _k);
 			auto end = steady_clock::now();
 			auto elapsed = duration_cast<milliseconds>(end - start);
 			buffer_time += elapsed.count();
@@ -763,7 +726,7 @@ void CSignalsDlg::OnBnClickedButton7()
 			Signals_Gen(i, i / 5, noize_lvl);
 			ResearchRrr.clear();
 			auto start = steady_clock::now();
-			//sp.Uncertainty_ipp(ResearchRrr, ImSignal1, ImSignal2, 4);
+			sp.Uncertainty_ipp(ResearchRrr, ImSignal1, ImSignal2, _k);
 			auto end = steady_clock::now();
 			auto elapsed = duration_cast<milliseconds>(end - start);
 			buffer_time += elapsed.count();
@@ -771,7 +734,40 @@ void CSignalsDlg::OnBnClickedButton7()
 		buffer_time /= povtor;
 		times[2].push_back(buffer_time);
 	}
-	ViewerDraw(times, size_start, size_stop, viewer3, "performance.png");
+	auto str_time = fh.get_time_str();
+	str_time = "performance_" + str_time + ".png";
+	str_time = LOGS_PATH + str_time;
+	ViewerDraw(times, size_start, size_stop, viewer3, str_time);
 	SetCursor(LoadCursor(nullptr, IDC_ARROW));
 	UpdateData(FALSE);
 }
+
+void CSignalsDlg::OnBnClickedButton8()
+{	
+	UpdateData(TRUE);
+	SetCursor(LoadCursor(nullptr, IDC_WAIT));
+	updateSP(); 
+
+	vector<int> delay_error_v;
+	vector<double> peak_intensity_v;
+
+	int b8_size = 100;
+	int try_size = 5;
+	for (int i = 0; i < try_size; i++)
+	{
+		Signals_Gen(b8_size, b8_size / 10, noize_lvl);
+		static vector<complex<double>> buffer_signal1 = ImSignal1;
+		Signals_Gen(1000, 100, noize_lvl);
+		ImSignal1 = buffer_signal1;
+		double pi= sp.Uncertainty_ipp_jtids(delay_size, ImSignal1, ImSignal2, _k, ResearchRrr, ResearchRrr2D, delay_lama);
+		peak_intensity_v.push_back(pi);
+	}
+	//auto file_name = a.get_time_str();
+	string file_name = "Study2020_" /*+ file_name*/;
+	file_name += "noizelvl_" + std::to_string((int)noize_lvl);
+	file_name += "signalSize_" + std::to_string(ImSignal2.size());
+	file_name = LOGS_PATH + file_name;
+	fh.write_vector_to_file(peak_intensity_v, file_name);
+}
+
+

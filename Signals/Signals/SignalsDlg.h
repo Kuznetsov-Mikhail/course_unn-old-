@@ -1,5 +1,4 @@
-﻿
-// SignalsDlg.h: файл заголовка
+﻿// SignalsDlg.h: файл заголовка
 //
 
 #pragma once
@@ -8,7 +7,11 @@
 #include "Signals_Processing.h"
 #include "ChartViewer.h"
 #include <fstream>
+#include <iostream>
+#include "rwfile.h"
+#include <cstring>
 using namespace std;
+#define LOGS_PATH "Logs/"
 
 // Диалоговое окно CSignalsDlg
 class CSignalsDlg : public CDialogEx
@@ -25,7 +28,6 @@ public:
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// поддержка DDX/DDV
 
-
 // Реализация
 protected:
 	HICON m_hIcon;
@@ -36,25 +38,43 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
+	
+	/*Объект отрисовки*/
 	CChartViewer viewer1;
+	/*Объект отрисовки*/
 	CChartViewer viewer2;
+	/*Объект отрисовки*/
 	CChartViewer viewer3;
+	/*Объект класса обработки сигналов*/
 	Signals_Processing sp;
+	/*Преобразование вектора double к вектору DoubleArray*/
 	DoubleArray vectorToArray(vector<double>& v);
+	/*Функции отрисовки*/
 	void ViewerDraw(vector<complex<double>>& data, int Xmax, CChartViewer& viewer_num);
 	void ViewerDrawSpectrum(vector<double>& data, int Xmax, CChartViewer& viewer_num);
 	void ViewerDraw(vector<double>& data, int Xmax, CChartViewer& viewer_num);
 	void ViewerDraw(vector<vector<double>>& data, double Xmin, double Xmax, CChartViewer& viewer_num, string PathPic);
+	/*Обработчик кнопки Cancel*/
 	afx_msg void OnBnClickedCancel();
+	/*Частота передачи данных*/
 	double bitrate;
+	/*Частота дискретизации*/
 	double sampling;
+	/*Кол-во бит в принятом сигнале*/
 	int bits_size;
+	/*Кол-во бит на задержку*/
 	int delay_size;
+	/*True задержка в битах*/
 	int delay_lama;
+	/*Функция обновления данных Signals_Processing*/
 	void updateSP();
+	/*Логическая переменная для отрисовки*/
 	BOOL Signals_or_Spectrs;
+	/*Обработчик кнопки генерации сигналов*/
 	afx_msg void OnBnClickedButton1();
+	/*Шум в дБ*/
 	double noize_lvl;
+	int _k;
 
 	////////////////////////
 	vector <complex<double>> ImSignal1;
@@ -70,25 +90,18 @@ public:
 	vector <pair<double, double>> veroiatnosti_un;
 	double f_dop;
 	BOOL Dopler_On;
+	BOOL scramble;
+	////////////////////////// fast convolution
 	afx_msg void OnBnClickedCheck1();
 	afx_msg void OnBnClickedButton2();
 	afx_msg void OnBnClickedButton3();
-	BOOL scramble;
-	////////////////////////// fast convolution
-	BOOL parallel;
-	CProgressCtrl Prog_bar;
-	CProgressCtrl ProgBarRes;
 	afx_msg void OnBnClickedButton4();
 	afx_msg void OnBnClickedButton5();
 	afx_msg void OnBnClickedButton6();
 	afx_msg void OnBnClickedButton7();
+	afx_msg void OnBnClickedButton8();
+	afx_msg void OnBnClickedButton9();
 	////////////////////////////////////////////
-	/*template <class T>
-	bool convertFromStr(string& str, T* var) {
-		istringstream ss(str);
-		return (ss >> *var);
-	}*/
-
 	template <class T>
 	string convertToStrPng(T* var) {
 		ostringstream ss;
@@ -140,4 +153,7 @@ public:
 		sp.spVertex(ImSpectr1);
 		sp.spVertex(ImSpectr2);
 	}
+	/*Объект класса File_helper*/
+	File_helper fh;
+
 };

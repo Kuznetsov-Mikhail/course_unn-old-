@@ -12,7 +12,8 @@
 //#include <../../../../../IntelSWTools/compilers_and_libraries_2020.0.166/windows/mkl/include/mkl.h>
 //#include "cubic.h"
 #define M_PI 3.1415926535
-#define comj complex<double>(0,1)
+#define comjd complex<double>(0,1)
+#define comjf complex<float>(0,1)
 
 
 using namespace std;
@@ -30,21 +31,21 @@ class Signals_Processing
 	int step2(int sizein);//возвращает ближайшее значение pow(2,n)
 	//Функция нормировки фазы до +-2M_PI
 	void NormalPhaza(double& Phaza);
-	/**
+	/*
 	Функция Доплеровского сдвига
 	*param PhiDopler - частота сдвига
 	*param samp - частота дескретизации сигнала
 	*/
 	void Dopler_shift(vector<complex<double>>& mass, double PhiDopler);
-	/**
+	/*
 	Функция Доплеровского масштобирования
 	*param Signal
 	*param speed - скорость объекта
 	*/
 	void Dopler_scaling(vector <complex<double>>& Signal, double koeff);
-	double Max(vector<double> Mass);
-	double Min(vector<double> Mass);
-	int pseudo_bit(int start, int end);//выбор псевдо случайного номера частоты
+	double Max(const vector<double>& Mass);
+	double Min(const vector<double>& Mass);
+	inline int pseudo_bit(int start, int end);//выбор псевдо случайного номера частоты
 
 	void fur(vector <complex<double>>& data, int is);//чистый фурье
 	void fur(vector <complex<float>>& data, int is);//чистый фурье
@@ -84,6 +85,18 @@ public:
 	void Uncertainty(vector<float>& mass, signal_buf& Signal1, signal_buf& Siganl2, int ksum);
 	void Uncertainty_omp(vector<double>& mass, vector<complex<double>> Signal1, vector<complex<double>> Siganl2, int ksum);
 	void Uncertainty_omp(vector<float>& mass, signal_buf& Signal1, signal_buf& Signal2, int ksum);
+	void Uncertainty_ipp(vector<float>& mass, const signal_buf& Signal1, const signal_buf& Signal2, int ksum);
+	void Uncertainty_ipp(vector<double>& mass, const vector<complex<double>>& Signal1, const vector<complex<double>>& Signal2, int ksum);
+	/*Функция неопределённости для JTIDS сигналов
+	delay_size - заданная задержка сигналов в битах
+	ImSignal1 - опорный сигнал
+	ImSignal2 - исследуемый сигнал
+	delay_lama - задержка
+	return peak_intensity
+	*/
+	double Uncertainty_ipp_jtids(int delay_size, const vector<complex<double>>& ImSignal1, \
+		const  vector<complex<double>>& ImSignal2, \
+		int ksum, vector <double>& ResearchRrr, vector<vector<float>>& ResearchRrr2D, int& delay_lama);
 
 	void Dopler(vector <complex<double>>& Signal, double shift, double center_frequency);
 	void InterSpline(vector<double>& Signal, vector<double>& NewSignal, double step);//интерполяция сплайном
@@ -93,7 +106,7 @@ public:
 	void FAST_FUR(vector <complex<double>> Signal, vector <complex<double>>& Spectr, bool is);
 	void spVertex(vector <complex<double>>& Spectr);
 
-	/**
+	/*
 	Функция генерации двух сигналов ППРЧ+MSK(дивиация частоты)
 	Рабочие частоты - 51 частота JTIDS
 	Число временных окон - 100
@@ -103,7 +116,7 @@ public:
 	*/
 	void FHSS(vector <complex<double>>& Signal1, vector <complex<double>>& Signal2, int signal1Size, int delaySize);
 	void FHSS(int signal1Size, int delaySize); //Генератор 50 FHSS сигналов
-	/**
+	/*
 	Функция генерации двух сигналов ППРЧ+MSK(дивиация частоты) используемых в системе связи JTIDS!!!
 	Рабочие частоты - 51 частота JTIDS
 	Число временных окон - 100
@@ -113,7 +126,7 @@ public:
 	*/
 	void Link16_Signals_Generator(vector <complex<double>>& Signal1, vector <complex<double>>& Signal2, int signal1Size, int delaySize, bool scramble);
 	void Simple_Signals_Generator(vector <complex<double>>& Signal1, vector <complex<double>>& Signal2, int signal1Size, int delaySize);
-	/**
+	/*
 	*Переменные для функции неопределённости для сигналов с широким спектром
 	*/
 	vector <vector<complex<double>>> FHSS_Signals;//50 сигналов исследуемых
@@ -122,6 +135,6 @@ public:
 	bank_buf FHSS_Signals_initial_fl;
 	bank_buf fir_s;
 	double peak_intensity(vector<double> mas);	//Выраженность максимума по безразмерному критерию
-	void Uncertainty_ipp(vector<float>& mass, vector<complex<float>> Signal1, vector<complex<float>> Signal2, int ksum);
+
 };
 

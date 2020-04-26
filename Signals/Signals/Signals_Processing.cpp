@@ -16,6 +16,7 @@ Signals_Processing::Signals_Processing()
 Signals_Processing::~Signals_Processing()
 {
 }
+
 void Signals_Processing::addNoize(vector<double>& mass, double NoizeV)
 {
 	double* shum_n = new double[mass.size()];
@@ -52,6 +53,7 @@ void Signals_Processing::addNoize(vector<double>& mass, double NoizeV)
 	}
 	delete[]shum_n;
 }
+
 void Signals_Processing::addNoize(vector < complex<double> >& mass, double NoizeV)
 {
 	vector<double> shum_ampl;
@@ -81,7 +83,7 @@ void Signals_Processing::addNoize(vector < complex<double> >& mass, double Noize
 	for (int i = 0; i < shum_c.size(); i++)
 	{
 		double r_phi = (rand() / RAND_MAX) * 2 * M_PI;
-		shum_c[i] = shum_ampl[i] * cos(r_phi) + comj * sin(r_phi);
+		shum_c[i] = shum_ampl[i] * cos(r_phi) + comjd * sin(r_phi);
 	}
 	for (int i = 0; i < mass.size(); i++)
 	{
@@ -98,6 +100,7 @@ void Signals_Processing::addNoize(vector < complex<double> >& mass, double Noize
 		mass[i] += alfa * shum_c[i];
 	}
 }
+
 void Signals_Processing::NormalPhaza(double& phaza)
 {
 	while (1)
@@ -114,6 +117,7 @@ void Signals_Processing::NormalPhaza(double& phaza)
 		}
 	}
 }
+
 void Signals_Processing::SignalFill(vector<double>& mass, vector<bool> data, bool type)
 {
 	if (type)
@@ -149,6 +153,7 @@ void Signals_Processing::SignalFill(vector<double>& mass, vector<bool> data, boo
 	}
 
 }
+
 void Signals_Processing::SignalFill(vector<complex<double>>& mass, vector<bool> data, bool type)
 {
 
@@ -160,13 +165,13 @@ void Signals_Processing::SignalFill(vector<complex<double>>& mass, vector<bool> 
 			{
 				Buffaza += 2 * M_PI * (delataW) / sampling;
 				NormalPhaza(Buffaza);
-				mass[i] = cos(Buffaza) + comj * sin(Buffaza);
+				mass[i] = cos(Buffaza) + comjd * sin(Buffaza);
 			}
 			else
 			{
 				Buffaza += 2 * M_PI * (-delataW) / sampling;
 				NormalPhaza(Buffaza);
-				mass[i] = cos(Buffaza) + comj * sin(Buffaza);
+				mass[i] = cos(Buffaza) + comjd * sin(Buffaza);
 			}
 		}
 	}
@@ -176,11 +181,12 @@ void Signals_Processing::SignalFill(vector<complex<double>>& mass, vector<bool> 
 		{
 			Buffaza = M_PI * data[i];
 			NormalPhaza(Buffaza);
-			mass[i] = cos(Buffaza) + comj * sin(Buffaza);
+			mass[i] = cos(Buffaza) + comjd * sin(Buffaza);
 		}
 	}
 
 }
+
 void Signals_Processing::DataFill(vector <bool>& Data1, vector <bool>& Data2, int Signal_size, int Data_size, int delay)
 {
 	vector <bool> Data;
@@ -219,6 +225,7 @@ void Signals_Processing::DataFill(vector <bool>& Data1, vector <bool>& Data2, in
 		Data2[i] = Data1[i - DELAY];
 	}
 }
+
 int Signals_Processing::Correlation(vector<double>& mass, vector<double> Signal1, vector<double> Signal2)
 {
 	int MMPdelay = 0;
@@ -250,6 +257,7 @@ int Signals_Processing::Correlation(vector<double>& mass, vector<double> Signal1
 
 
 }
+
 int Signals_Processing::Correlation(vector<double>& mass, vector<complex<double>> Signal1, vector<complex<double>> Signal2)
 {
 	int MMPdelay = 0;
@@ -286,6 +294,7 @@ int Signals_Processing::Correlation(vector<double>& mass, vector<complex<double>
 	}
 	return ((double)MMPdelay /*/ SH*/);
 }
+
 void Signals_Processing::Uncertainty(vector<double>& mass, vector<complex<double>> Signal1, vector<complex<double>> Signal2, int ksum)
 {
 	if (ksum == 0)
@@ -331,7 +340,7 @@ void Signals_Processing::Uncertainty(vector<double>& mass, vector<complex<double
 	}
 }
 
-void Signals_Processing::Uncertainty_ipp(vector<float>& mass, vector<complex<float>> Signal1, vector<complex<float>> Signal2, int ksum)
+void Signals_Processing::Uncertainty_ipp(vector<float>& mass, const signal_buf& Signal1, const signal_buf& Signal2, int ksum)
 {
 	if (ksum == 0)
 	{
@@ -412,6 +421,148 @@ void Signals_Processing::Uncertainty_ipp(vector<float>& mass, vector<complex<flo
 	ippFree(pVec2);
 	ippFree(pVec1);
 }
+
+void Signals_Processing::Uncertainty_ipp(vector<double>& mass, const vector<complex<double>>& Signal1, const vector<complex<double>>& Signal2, int ksum)
+{
+	if (ksum == 0)
+	{
+		ksum = 1;
+	}
+	double localMax;
+	int local_signal_size = Signal1.size();
+	int k = step2(local_signal_size);
+	mass.resize(local_signal_size);
+	int group = k / ksum;
+
+	Ipp64fc* pVec1 = ippsMalloc_64fc(local_signal_size);
+#pragma omp parallel for
+	for (int j = 0; j < local_signal_size; j++)
+	{
+		pVec1[j].re = Signal1[j].real();
+		pVec1[j].im = Signal1[j].imag();
+	}
+	Ipp64fc* pVec2 = ippsMalloc_64fc(local_signal_size);
+	Ipp64fc* correlation_Kgroup = ippsMalloc_64fc(group);// суммирование correlation по блокам ksum
+	Ipp64f* correlation_Kgroup_abs = ippsMalloc_64f(group);// суммирование correlation по блокам ksum
+	Ipp64fc* correlation = ippsMalloc_64fc(local_signal_size); //вектор произведения С1 и С2
+
+	//for fft
+	// Query to get buffer sizes
+	int sizeFFTSpec, sizeFFTInitBuf, sizeFFTWorkBuf;
+	int order = (int)(log((double)group) / log(2.0));
+	ippsFFTGetSize_C_64fc(order, IPP_FFT_NODIV_BY_ANY,
+		ippAlgHintAccurate, &sizeFFTSpec, &sizeFFTInitBuf, &sizeFFTWorkBuf);
+	// Alloc FFT buffers
+	IppsFFTSpec_C_64fc* pFFTSpec = 0;
+	Ipp8u* pFFTSpecBuf, * pFFTInitBuf, * pFFTWorkBuf;
+	pFFTSpecBuf = ippsMalloc_8u(sizeFFTSpec);
+	pFFTInitBuf = ippsMalloc_8u(sizeFFTInitBuf);
+	pFFTWorkBuf = ippsMalloc_8u(sizeFFTWorkBuf);
+	// Initialize FFT
+	ippsFFTInit_C_64fc(&pFFTSpec, order, IPP_FFT_NODIV_BY_ANY,
+		ippAlgHintAccurate, pFFTSpecBuf, pFFTInitBuf);
+	////
+//#pragma omp parallel for
+	for (int i = 0; i < local_signal_size; i++)
+	{
+#pragma omp parallel for
+		for (int j = 0; j < local_signal_size; j++)
+		{
+			pVec2[j].re = Signal2[j + i].real();
+			pVec2[j].im = Signal2[j + i].imag();
+		}
+		ippsConj_64fc_I(pVec2, local_signal_size);
+		ippsMul_64fc(pVec1, pVec2, correlation, local_signal_size);
+
+#pragma omp parallel for
+		for (int j = 0; j < group; j++)
+		{
+			Ipp64fc bufferSum{ 0, 0 };
+			for (int k = 0; k < ksum; k++)
+			{
+				if (j * ksum + k >= local_signal_size)break;
+				bufferSum.re = bufferSum.re + correlation[j * ksum + k].re;
+				bufferSum.im = bufferSum.im + correlation[j * ksum + k].im;
+			}
+			correlation_Kgroup[j] = bufferSum;
+		}
+		// Do the FFT
+		ippsFFTFwd_CToC_64fc(correlation_Kgroup, correlation_Kgroup, pFFTSpec, pFFTWorkBuf);
+		ippsMagnitude_64fc(correlation_Kgroup, correlation_Kgroup_abs, group);
+		mass[i] = 0;
+		Ipp64f imax;
+		ippsMax_64f(correlation_Kgroup_abs, group, &imax);
+		mass[i] = imax;
+	}
+	if (pFFTInitBuf) ippFree(pFFTInitBuf);
+	if (pFFTWorkBuf) ippFree(pFFTWorkBuf);
+	if (pFFTSpecBuf) ippFree(pFFTSpecBuf);
+	ippFree(correlation);
+	ippFree(correlation_Kgroup);
+	ippFree(correlation_Kgroup_abs);
+	ippFree(pVec2);
+	ippFree(pVec1);
+}
+
+double  Signals_Processing::Uncertainty_ipp_jtids(int delay_size, const vector<complex<double>>& ImSignal1, const vector<complex<double>>& ImSignal2, int ksum, vector <double>& ResearchRrr, vector <vector<float>>& ResearchRrr2D, int& delay_lama)
+{
+	//////////////////// Подготовка входных сигналов
+	signal_buf signal1;
+	signal_buf signal2;
+	for (int i = 0; i < ImSignal1.size(); i++)
+	{
+		complex<float> buf; buf = ImSignal1[i].real() + comjd * ImSignal1[i].imag();
+		signal1.push_back(buf);
+	}
+	for (int i = 0; i < ImSignal2.size(); i++)
+	{
+		complex<float> buf; buf = ImSignal2[i].real() + comjd * ImSignal2[i].imag();
+		signal2.push_back(buf);
+	}
+	//////////////////// fast_convolution
+	fast_convolution(signal1, this->fir_s, this->FHSS_Signals_initial_fl, GPU_FD);
+	fast_convolution(signal2, this->fir_s, this->FHSS_Signals_fl, GPU_FD);
+
+	ResearchRrr.clear();
+	ResearchRrr2D.clear();
+	ResearchRrr2D.resize(this->operating_frequencies.size());
+#pragma omp parallel for
+	for (int i = 0; i < this->operating_frequencies.size(); i++)
+	{
+		vector<float>buffer;
+		this->Uncertainty_ipp(buffer, this->FHSS_Signals_initial_fl[i], this->FHSS_Signals_fl[i], ksum);
+		ResearchRrr2D[i] = buffer;
+		//Prog_bar.SetPos(i+1);
+	}
+	ResearchRrr.resize(ResearchRrr2D[0].size());
+	for (int j = 0; j < this->operating_frequencies.size(); j++)
+	{
+		for (int i = 0; i < ResearchRrr.size(); i++)
+		{
+			ResearchRrr[i] += ResearchRrr2D[j][i];
+		}
+	}
+	if (ResearchRrr.size() != NULL)
+	{
+		double buff_ResearchRrr = 0;
+		for (int i = 0; i < ResearchRrr.size(); i++)
+		{
+			if (ResearchRrr[i] > buff_ResearchRrr)
+			{
+				buff_ResearchRrr = ResearchRrr[i]; delay_lama = i;
+			}
+		}
+	}
+	this->FHSS_Signals_initial_fl.clear();
+	this->FHSS_Signals_fl.clear();
+	int found_delay = delay_lama; //in counts 
+	delay_lama = int((double)delay_lama / this->bit_time);// in bits
+	int expected_delay = delay_size * this->bit_time;
+	int delta_error = abs(expected_delay - found_delay);
+	double pi = peak_intensity(ResearchRrr);
+	return pi;
+}
+
 void Signals_Processing::Uncertainty_omp(vector<double>& mass, vector<complex<double>> Signal1, vector<complex<double>> Signal2, int ksum)
 {
 	if (ksum == 0)
@@ -423,18 +574,17 @@ void Signals_Processing::Uncertainty_omp(vector<double>& mass, vector<complex<do
 	int k = step2(Signal1.size());
 	mass.resize(Signal1.size());
 	int group = k / ksum;
-
-	
 #pragma omp parallel for
 	for (int i = 0; i < local_signal_size; i++)
 	{
 		vector <complex<double>> correlation_Kgroup;// суммирование correlation по блокам ksum
-		correlation_Kgroup.resize(group);
 		vector <complex<double>> correlation; //вектор произведения С1 и С2	
 		correlation.resize(k);
+		correlation_Kgroup.resize(group);
 		for (int j = 0; j < local_signal_size; j++)
 		{
-			correlation[j] = (Signal1[j] * conj(Signal2[j + i]));			
+			correlation[j] = (Signal1[j] * conj(Signal2[j + i]));
+			//correlation[i] += (Signal1[j] * conj(Signal2[j + i]));
 		}
 #pragma omp parallel for
 		for (int j = 0; j < group; j++)
@@ -454,6 +604,7 @@ void Signals_Processing::Uncertainty_omp(vector<double>& mass, vector<complex<do
 		}
 	}
 }
+
 void Signals_Processing::Uncertainty_omp(vector<float>& mass, signal_buf& Signal1, signal_buf& Signal2, int ksum)
 {
 	if (ksum == 0)
@@ -541,6 +692,7 @@ void Signals_Processing::Uncertainty(vector<float>& mass, signal_buf& Signal1, s
 		mass.push_back(localMax);
 	}
 }
+
 void Signals_Processing::FAST_FUR(vector <complex<double>> Signal, vector <complex<double>>& Spectr, bool is)
 {
 	Spectr.clear();
@@ -549,6 +701,7 @@ void Signals_Processing::FAST_FUR(vector <complex<double>> Signal, vector <compl
 	Spectr = Signal;
 	fur(Spectr, is);
 }
+
 void Signals_Processing::spVertex(vector <complex<double>>& Spectr)
 {
 	vector <complex<double>> first, second;
@@ -611,6 +764,7 @@ void Signals_Processing::fur(vector <complex <double>>& data, int is)
 			data[i] /= (double)n;
 		}
 }
+
 void Signals_Processing::fur(vector <complex <float>>& data, int is)
 {
 	int i, j, istep, n;
@@ -662,18 +816,21 @@ void Signals_Processing::fur(vector <complex <float>>& data, int is)
 			data[i] /= (float)n;
 		}
 }
-double Signals_Processing::Max(vector<double> Mass)
+
+double Signals_Processing::Max(const vector<double>& Mass)
 {
 	double ymax = 0;
 	for (auto J : Mass) if (J > ymax) ymax = J;
 	return ymax;
 }
-double Signals_Processing::Min(vector<double> Mass)
+
+double Signals_Processing::Min(const vector<double>& Mass)
 {
 	double ymin = 0;
 	for (auto J : Mass) if (J < ymin) ymin = J;
 	return ymin;
 }
+
 int Signals_Processing::step2(int sizein)
 {
 	int i = 0;
@@ -689,19 +846,22 @@ int Signals_Processing::step2(int sizein)
 	}
 	return pow(2, i);
 }
+
 void Signals_Processing::Dopler(vector <complex<double>>& Signal, double shift, double center_frequency)
 {
 	double alfa = shift / center_frequency;
 	Dopler_shift(Signal, shift);
 	Dopler_scaling(Signal, alfa);
 }
+
 void Signals_Processing::Dopler_shift(vector<complex<double>>& mass, double PhiDopler)
 {
 	for (int i = 0; i < mass.size(); i++)
 	{
-		mass[i] *= exp(comj * 2. * M_PI * PhiDopler * (double)i / sampling);
+		mass[i] *= exp(comjd * 2. * M_PI * PhiDopler * (double)i / sampling);
 	}
 }
+
 void Signals_Processing::Dopler_scaling(vector <complex<double>>& Signal, double koeff)
 {
 	vector <complex<double>> BufSignal = Signal;
@@ -728,10 +888,11 @@ void Signals_Processing::Dopler_scaling(vector <complex<double>>& Signal, double
 	NewSignal.resize(NewSignalI.size());
 	for (int i = 0; i < NewSignal.size(); i++)
 	{
-		NewSignal[i] = NewSignalR[i] + comj * NewSignalI[i];
+		NewSignal[i] = NewSignalR[i] + comjd * NewSignalI[i];
 	}
 	Signal.clear(); Signal = NewSignal;
 }
+
 void Signals_Processing::Cubic_Inter_spline(vector<double>& Old_Data, vector<double>& New_Data, double step)
 {
 	vector<double>X; X.resize(Old_Data.size());
@@ -750,6 +911,7 @@ void Signals_Processing::Cubic_Inter_spline(vector<double>& Old_Data, vector<dou
 		New_Data[i] = (s(x));
 	}
 }
+
 void Signals_Processing::Linear_interpolation(vector<double>& Old_Data, vector<double>& New_Data, double step)
 {
 	New_Data.clear();
@@ -769,6 +931,7 @@ void Signals_Processing::Linear_interpolation(vector<double>& Old_Data, vector<d
 		}
 	}
 }
+
 void Signals_Processing::InterSpline(vector<double>& Signal, vector<double>& NewSignal, double step)
 {
 	vector<double> massx;
@@ -811,6 +974,7 @@ void Signals_Processing::InterSpline(vector<double>& Signal, vector<double>& New
 		NewSignal[i] = (spline(massx, massy, mit, i, step, k));  //Переменная для хранения значения интерполянты в точке
 	}
 }
+
 void Signals_Processing::Simple_Signals_Generator(vector <complex<double>>& Signal1, vector <complex<double>>& Signal2, int signalSize, int delaySize)
 {
 	Signal1.clear();
@@ -934,12 +1098,13 @@ void Signals_Processing::Simple_Signals_Generator(vector <complex<double>>& Sign
 		if (SignalsObraz[i].b_bit)Buffaza += 2 * M_PI * (local_frequencies + delta4astota) / sampling;
 		else Buffaza += 2 * M_PI * (local_frequencies - delta4astota) / sampling;
 		NormalPhaza(Buffaza);
-		Signal2.push_back(cos(Buffaza) + comj * sin(Buffaza));
+		Signal2.push_back(cos(Buffaza) + comjd * sin(Buffaza));
 	}
 	delaySize *= bit_time;
 	for (int i = delaySize; i < delaySize + Signal2.size() / 2; i++)
 		Signal1.push_back(Signal2[i]);
 }
+
 void Signals_Processing::Link16_Signals_Generator(vector <complex<double>>& Signal1, vector <complex<double>>& Signal2, int signalSize, int delaySize, bool scramble)
 {
 	Signal1.clear();
@@ -1071,12 +1236,13 @@ void Signals_Processing::Link16_Signals_Generator(vector <complex<double>>& Sign
 		if (SignalsObraz[i].b_bit)Buffaza += 2 * M_PI * (local_frequencies + delta4astota) / sampling;
 		else Buffaza += 2 * M_PI * (local_frequencies - delta4astota) / sampling;
 		NormalPhaza(Buffaza);
-		Signal2.push_back(cos(Buffaza) + comj * sin(Buffaza));
+		Signal2.push_back(cos(Buffaza) + comjd * sin(Buffaza));
 	}
 	delaySize *= bit_time;
 	for (int i = delaySize; i < delaySize + Signal2.size() / 2; i++) //Опорный сигнал
 		Signal1.push_back(Signal2[i]);
 }
+
 void Signals_Processing::FHSS(vector <complex<double>>& Signal1, vector <complex<double>>& Signal2, int signalSize, int delaySize)
 {
 	struct obraz
@@ -1137,11 +1303,12 @@ void Signals_Processing::FHSS(vector <complex<double>>& Signal1, vector <complex
 		if (SignalsObraz[i].b_bit)Buffaza += 2 * M_PI * (local_frequencies + delta4astota) / sampling;
 		else Buffaza += 2 * M_PI * (local_frequencies - delta4astota) / sampling;
 		NormalPhaza(Buffaza);
-		Signal2.push_back(cos(Buffaza) + comj * sin(Buffaza));
+		Signal2.push_back(cos(Buffaza) + comjd * sin(Buffaza));
 	}
 	for (int i = delaySize; i < delaySize + Signal2.size() / 2; i++) //Опорный сигнал
 		Signal1.push_back(Signal2[i]);
 }
+
 void Signals_Processing::FHSS(int signalSize, int delaySize)
 {
 	FHSS_Signals.clear();
@@ -1208,7 +1375,7 @@ void Signals_Processing::FHSS(int signalSize, int delaySize)
 		if (SignalsObraz[i].b_bit)Buffaza += 2 * M_PI * (local_frequencies + delta4astota) / sampling;
 		else Buffaza += 2 * M_PI * (local_frequencies - delta4astota) / sampling;
 		NormalPhaza(Buffaza);
-		FHSS_Signals[SignalsObraz[i].W_number][i] = cos(Buffaza) + comj * sin(Buffaza);
+		FHSS_Signals[SignalsObraz[i].W_number][i] = cos(Buffaza) + comjd * sin(Buffaza);
 	}
 
 	for (int j = 0; j < FHSS_Signals_initial.size(); j++)
@@ -1216,10 +1383,12 @@ void Signals_Processing::FHSS(int signalSize, int delaySize)
 			FHSS_Signals_initial[j].push_back(FHSS_Signals[j][i]);
 
 }
-int Signals_Processing::pseudo_bit(int start, int end)
+
+inline int Signals_Processing::pseudo_bit(int start, int end)
 {
 	return (start + (end - start) * rand() / RAND_MAX);
 }
+
 double Signals_Processing::peak_intensity(vector<double> mas)
 {
 	double sum = 0;
