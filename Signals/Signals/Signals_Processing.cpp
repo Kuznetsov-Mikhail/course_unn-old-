@@ -504,7 +504,7 @@ void Signals_Processing::Uncertainty_ipp(vector<double>& mass, const vector<comp
 	ippFree(pVec1);
 }
 
-double  Signals_Processing::Uncertainty_ipp_jtids(int delay_size, const vector<complex<double>>& ImSignal1, const vector<complex<double>>& ImSignal2, int ksum, vector <double>& ResearchRrr, vector <vector<float>>& ResearchRrr2D, int& delay_lama)
+double  Signals_Processing::Uncertainty_ipp_jtids(int delay_size, const vector<complex<double>>& ImSignal1, const vector<complex<double>>& ImSignal2, int ksum, vector <double>& ResearchRrr, int& found_delay, int& delay_lama)
 {
 	//////////////////// Подготовка входных сигналов
 	signal_buf signal1;
@@ -524,22 +524,15 @@ double  Signals_Processing::Uncertainty_ipp_jtids(int delay_size, const vector<c
 	fast_convolution(signal2, this->fir_s, this->FHSS_Signals_fl, GPU_FD);
 
 	ResearchRrr.clear();
-	ResearchRrr2D.clear();
-	ResearchRrr2D.resize(this->operating_frequencies.size());
-#pragma omp parallel for
+	ResearchRrr.resize(this->FHSS_Signals_initial_fl[0].size());
 	for (int i = 0; i < this->operating_frequencies.size(); i++)
 	{
 		vector<float>buffer;
 		this->Uncertainty_ipp(buffer, this->FHSS_Signals_initial_fl[i], this->FHSS_Signals_fl[i], ksum);
-		ResearchRrr2D[i] = buffer;
-		//Prog_bar.SetPos(i+1);
-	}
-	ResearchRrr.resize(ResearchRrr2D[0].size());
-	for (int j = 0; j < this->operating_frequencies.size(); j++)
-	{
-		for (int i = 0; i < ResearchRrr.size(); i++)
+#pragma omp parallel for
+		for (int j = 0; j < ResearchRrr.size(); j++)
 		{
-			ResearchRrr[i] += ResearchRrr2D[j][i];
+			ResearchRrr[j] += buffer[j];
 		}
 	}
 	if (ResearchRrr.size() != NULL)
@@ -555,7 +548,7 @@ double  Signals_Processing::Uncertainty_ipp_jtids(int delay_size, const vector<c
 	}
 	this->FHSS_Signals_initial_fl.clear();
 	this->FHSS_Signals_fl.clear();
-	int found_delay = delay_lama; //in counts 
+	found_delay = delay_lama; //in counts 
 	delay_lama = int((double)delay_lama / this->bit_time);// in bits
 	int expected_delay = delay_size * this->bit_time;
 	int delta_error = abs(expected_delay - found_delay);

@@ -21,8 +21,8 @@ CSignalsDlg::CSignalsDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_SIGNALS_DIALOG, pParent)
 	, bitrate(5000000)
 	, sampling(350000000)
-	, bits_size(2250)
-	, delay_size(750)
+	, bits_size(1000)
+	, delay_size(100)
 	, delay_lama(0)
 	, Signals_or_Spectrs(FALSE)
 	, noize_lvl(100)
@@ -31,7 +31,7 @@ CSignalsDlg::CSignalsDlg(CWnd* pParent /*=nullptr*/)
 	, scramble(TRUE)
 	, Signals_generator_type(TRUE)
 	, test_time_cr(0)
-	, _k(8)
+	, _k(32)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -545,7 +545,8 @@ void CSignalsDlg::OnBnClickedButton2()
 	UpdateData(TRUE);
 	SetCursor(LoadCursor(nullptr, IDC_WAIT));
 	updateSP();
-	sp.Uncertainty_ipp_jtids(delay_size, ImSignal1, ImSignal2, _k, ResearchRrr, ResearchRrr2D, delay_lama);
+	int found_delay;
+	double pi = sp.Uncertainty_ipp_jtids(delay_size, ImSignal1, ImSignal2, _k, ResearchRrr, found_delay, delay_lama);
 	ViewerDraw(ResearchRrr, ResearchRrr.size(), viewer3);
 	SetCursor(LoadCursor(nullptr, IDC_ARROW));
 	UpdateData(FALSE);
@@ -742,32 +743,80 @@ void CSignalsDlg::OnBnClickedButton7()
 	UpdateData(FALSE);
 }
 
+//Исследование определения ВВЗ функцией неопределённости по каналам.
 void CSignalsDlg::OnBnClickedButton8()
-{	
+{
 	UpdateData(TRUE);
 	SetCursor(LoadCursor(nullptr, IDC_WAIT));
-	updateSP(); 
+	updateSP();
 
-	vector<int> delay_error_v;
-	vector<double> peak_intensity_v;
+	/*vector<int> delay_error_v;
+	vector<double> peak_intensity_v;*/
 
-	int b8_size = 100;
-	int try_size = 5;
-	for (int i = 0; i < try_size; i++)
+	veroiatnosti_fhss.clear();
+	//veroiatnosti_un.clear();
+	double noize_min_r = -35;
+	double noize_max_r = -25;
+	int noize_dots_r = 5;
+	double noize_step_r = (noize_max_r - noize_min_r) / (noize_dots_r - 1);
+	veroiatnosti_fhss.resize(noize_dots_r);
+	//veroiatnosti_un.resize(noize_dots_r);
+
+	for (int i = 0; i < noize_dots_r; i++)
 	{
-		Signals_Gen(b8_size, b8_size / 10, noize_lvl);
-		static vector<complex<double>> buffer_signal1 = ImSignal1;
-		Signals_Gen(1000, 100, noize_lvl);
-		ImSignal1 = buffer_signal1;
-		double pi= sp.Uncertainty_ipp_jtids(delay_size, ImSignal1, ImSignal2, _k, ResearchRrr, ResearchRrr2D, delay_lama);
-		peak_intensity_v.push_back(pi);
+		double noize_r = noize_min_r + i * noize_step_r;
+		int try_size = 5;
+		for (int j = 0; j < try_size; j++)
+		{
+			Signals_Gen(bits_size, bits_size / 10, noize_r);
+			int found_delay;
+			double pi = sp.Uncertainty_ipp_jtids(delay_size, ImSignal1, ImSignal2, _k, ResearchRrr, found_delay, delay_lama);
+			double expected_delay = delay_size * sp.bit_time;
+			double deltadelay = abs(expected_delay - found_delay);
+			if ((deltadelay < (double(sp.bit_time) / 2)) && pi > 0.008)
+			{
+				veroiatnosti_fhss[i].second += 1;
+			}
+			/*if ((deltadelay < (double(sp.bit_time) / 2)))
+			{
+				veroiatnosti_un[i].second += 1;
+			}*/
+			/*peak_intensity_v.push_back(pi);
+			auto file_name = fh.get_time_str();
+			file_name = "Study2020_" + file_name;
+			file_name += "_noizelvl_" + std::to_string((int)noize_lvl);
+			file_name += "signalSize_" + std::to_string(ImSignal2.size());
+			file_name += "k" + std::to_string(_k);
+			file_name = LOGS_PATH + file_name;
+			fh.write_vector_to_file(peak_intensity_v, file_name);*/
+		}
+		veroiatnosti_fhss[i].second /= try_size;
+		veroiatnosti_fhss[i].first = noize_r;
+		/*veroiatnosti_un[i].second /= try_size;
+		veroiatnosti_un[i].first = noize_r;*/
+		auto file_name = fh.get_time_str();
+		file_name = "veroiatnosti_fhss_" + file_name;
+		file_name += "_noizelvl_" + std::to_string((int)noize_r);
+		file_name += "_signalSize_" + std::to_string(ImSignal2.size());
+		file_name += "_k_" + std::to_string(_k);
+		file_name += "_try_size_" + std::to_string(try_size);
+		file_name += "_vector_size_" + std::to_string(try_size);
+		file_name += ".txt";
+		file_name = LOGS_PATH + file_name;
+		vectorDoubleToFile(veroiatnosti_fhss, file_name);
 	}
-	//auto file_name = a.get_time_str();
-	string file_name = "Study2020_" /*+ file_name*/;
-	file_name += "noizelvl_" + std::to_string((int)noize_lvl);
-	file_name += "signalSize_" + std::to_string(ImSignal2.size());
-	file_name = LOGS_PATH + file_name;
-	fh.write_vector_to_file(peak_intensity_v, file_name);
+	vectorDoubleToFile(veroiatnosti_fhss, "veroiatnostiPro.txt");
+	vector<vector<double>> veroiatnosti_help; veroiatnosti_help.resize(2);
+	for (int i = 0; i < veroiatnosti_fhss.size(); i++)
+	{
+		veroiatnosti_help[0].push_back(veroiatnosti_fhss[i].second);
+		veroiatnosti_help[1].push_back(veroiatnosti_un[i].second);
+	}
+	ViewerDraw(veroiatnosti_help, noize_min_r, noize_max_r, viewer3, "veroiatnosti.png");
+	SetCursor(LoadCursor(nullptr, IDC_ARROW));
+	UpdateData(0);
+	SetCursor(LoadCursor(nullptr, IDC_ARROW));
+	UpdateData(FALSE);
 }
 
 

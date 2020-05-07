@@ -96,7 +96,7 @@ public:
 	*/
 	double Uncertainty_ipp_jtids(int delay_size, const vector<complex<double>>& ImSignal1, \
 		const  vector<complex<double>>& ImSignal2, \
-		int ksum, vector <double>& ResearchRrr, vector<vector<float>>& ResearchRrr2D, int& delay_lama);
+		int ksum, vector <double>& ResearchRrr, int& found_delay, int& delay_lama);
 
 	void Dopler(vector <complex<double>>& Signal, double shift, double center_frequency);
 	void InterSpline(vector<double>& Signal, vector<double>& NewSignal, double step);//интерпол€ци€ сплайном
