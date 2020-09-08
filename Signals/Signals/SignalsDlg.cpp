@@ -360,7 +360,8 @@ void CSignalsDlg::ViewerDraw(vector<vector<double>>& data, double Xmin, double X
 	// Add a line layer to the chart with 3-pixel line width
 	LineLayer* layer = c->addLineLayer();
 	layer->setLineWidth(3);
-
+	//
+	layer->setDataLabelFormat("{value|1} ");
 	// Add 3 data series to the line layer
 	for (int i = 0; i < Arr_dataReal.size(); i++)
 	{
@@ -681,12 +682,12 @@ void CSignalsDlg::OnBnClickedButton7()
 	SetCursor(LoadCursor(nullptr, IDC_WAIT));
 	updateSP();
 	vector<vector<double>> times;
-	times.resize(3); //0-noMod 1-ompMod 2-ippMod
+	times.resize(2); //0-noMod 1-ompMod 2-ippMod
 
-	int size_start = 10;
-	int size_stop = size_start + 100;
-	int size_step = (size_stop - size_start) / 5;
-	int povtor = 1;
+	int size_start = 100;
+	int size_stop = size_start + 1000;
+	int size_step = (size_stop - size_start) / 10;
+	int povtor = 5;
 	for (int i = size_start; i < size_stop; i += size_step)
 	{
 		u_int64 buffer_time = 0;
@@ -711,7 +712,7 @@ void CSignalsDlg::OnBnClickedButton7()
 			Signals_Gen(i, i / 5, noize_lvl);
 			ResearchRrr.clear();
 			auto start = steady_clock::now();
-			sp.Uncertainty_omp(ResearchRrr, ImSignal1, ImSignal2, _k);
+			sp.Uncertainty_ipp(ResearchRrr, ImSignal1, ImSignal2, _k);
 			auto end = steady_clock::now();
 			auto elapsed = duration_cast<milliseconds>(end - start);
 			buffer_time += elapsed.count();
@@ -719,28 +720,62 @@ void CSignalsDlg::OnBnClickedButton7()
 		buffer_time /= povtor;
 		times[1].push_back(buffer_time);
 	}
-	for (int i = size_start; i < size_stop; i += size_step)
-	{
-		u_int64 buffer_time = 0;
-		for (int j = 0; j < povtor; j++)
-		{
-			Signals_Gen(i, i / 5, noize_lvl);
-			ResearchRrr.clear();
-			auto start = steady_clock::now();
-			sp.Uncertainty_ipp(ResearchRrr, ImSignal1, ImSignal2, _k);
-			auto end = steady_clock::now();
-			auto elapsed = duration_cast<milliseconds>(end - start);
-			buffer_time += elapsed.count();
-		}
-		buffer_time /= povtor;
-		times[2].push_back(buffer_time);
-	}
 	auto str_time = fh.get_time_str();
 	str_time = "performance_" + str_time + ".png";
 	str_time = LOGS_PATH + str_time;
 	ViewerDraw(times, size_start, size_stop, viewer3, str_time);
 	SetCursor(LoadCursor(nullptr, IDC_ARROW));
 	UpdateData(FALSE);
+	/////////////////////////////
+	/////////////////////////////
+	/////////////////////////////
+	//UpdateData(TRUE);
+	//SetCursor(LoadCursor(nullptr, IDC_WAIT));
+	//updateSP();
+	//vector<vector<double>> times;
+	//times.resize(2); //0-noMod 1-ompMod 2-ippMod
+
+	//int k_start = pow(2,0);
+	//int k_stop = pow(2, 7);
+	//int povtor = 5;
+	//for (int i = k_start; i <= k_stop; i *= 2)
+	//{
+	//	u_int64 buffer_time = 0;
+	//	for (int j = 0; j < povtor; j++)
+	//	{
+	//		Signals_Gen(bits_size, delay_size, noize_lvl);
+	//		ResearchRrr.clear();
+	//		auto start = steady_clock::now();
+	//		sp.Uncertainty(ResearchRrr, ImSignal1, ImSignal2, i);
+	//		auto end = steady_clock::now();
+	//		auto elapsed = duration_cast<milliseconds>(end - start);
+	//		buffer_time += elapsed.count();
+	//	}
+	//	buffer_time /= povtor;
+	//	times[0].push_back(buffer_time);
+	//}
+	//for (int i = k_start; i <= k_stop; i *= 2)
+	//{
+	//	u_int64 buffer_time = 0;
+	//	for (int j = 0; j < povtor; j++)
+	//	{
+	//		Signals_Gen(bits_size, delay_size, noize_lvl);
+	//		ResearchRrr.clear();
+	//		auto start = steady_clock::now();
+	//		sp.Uncertainty_ipp(ResearchRrr, ImSignal1, ImSignal2, i);
+	//		auto end = steady_clock::now();
+	//		auto elapsed = duration_cast<milliseconds>(end - start);
+	//		buffer_time += elapsed.count();
+	//	}
+	//	buffer_time /= povtor;
+	//	times[1].push_back(buffer_time);
+	//}
+	//auto str_time = fh.get_time_str();
+	//str_time = "performance_k_" + str_time + ".png";
+	//str_time = LOGS_PATH + str_time;
+	//ViewerDraw(times, 0, 7, viewer3, str_time);
+	//SetCursor(LoadCursor(nullptr, IDC_ARROW));
+	//UpdateData(FALSE);
 }
 
 //Исследование определения ВВЗ функцией неопределённости по каналам.
@@ -755,9 +790,9 @@ void CSignalsDlg::OnBnClickedButton8()
 
 	veroiatnosti_fhss.clear();
 	//veroiatnosti_un.clear();
-	double noize_min_r = -35;
+	double noize_min_r = -30;
 	double noize_max_r = -25;
-	int noize_dots_r = 5;
+	int noize_dots_r = 10;
 	double noize_step_r = (noize_max_r - noize_min_r) / (noize_dots_r - 1);
 	veroiatnosti_fhss.resize(noize_dots_r);
 	//veroiatnosti_un.resize(noize_dots_r);
