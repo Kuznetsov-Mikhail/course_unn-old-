@@ -136,5 +136,16 @@ public:
 	bank_buf fir_s;
 	double peak_intensity(vector<double> mas);	//Выраженность максимума по безразмерному критерию
 
+/**
+* СИНГУЛЯРНОЕ РАЗЛОЖЕНИЕ
+*/
+	int CSVD(vector<complex<double>> A, int M, int N, int NU, int NV, vector<double>& S,
+		vector<complex<double>>& U, vector<complex<double>>& V);
+/**
+* ТРАНСПОНИРОВАНИЕ И ПЕРЕМНОЖЕНИЕ МАТРИЦ
+*/
+	void trans_matr(const vector<vector<complex<double>>>& v1,
+		const vector<vector<complex<double>>>& v2, vector<vector<complex<double>>>& v3);
+	void transpose_conj(vector<vector<complex<double>>>& v1);
 };
 
