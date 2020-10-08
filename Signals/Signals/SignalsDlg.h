@@ -155,5 +155,8 @@ public:
 	}
 	/*Объект класса File_helper*/
 	File_helper fh;
-
+	/// <summary>
+	/// VI COURSE
+	/// </summary>
+	afx_msg void OnBnClickedButton10();
 };

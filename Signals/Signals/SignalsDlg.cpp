@@ -71,6 +71,7 @@ BEGIN_MESSAGE_MAP(CSignalsDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON7, &CSignalsDlg::OnBnClickedButton7)
 	ON_BN_CLICKED(IDC_BUTTON8, &CSignalsDlg::OnBnClickedButton8)
 	ON_BN_CLICKED(IDC_BUTTON9, &CSignalsDlg::OnBnClickedButton9)
+	ON_BN_CLICKED(IDC_BUTTON10, &CSignalsDlg::OnBnClickedButton10)
 END_MESSAGE_MAP()
 
 
@@ -855,3 +856,9 @@ void CSignalsDlg::OnBnClickedButton8()
 }
 
 
+
+//6course
+void CSignalsDlg::OnBnClickedButton10()
+{
+	
+}
