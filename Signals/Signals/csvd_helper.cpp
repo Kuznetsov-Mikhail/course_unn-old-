@@ -515,10 +515,10 @@ int Signals_Processing::nonlinear_filtering(vector<complex<double>>& signal, dou
 		NormalPhaza(Buffaza);
 		template_signal[i] = cos(Buffaza) + comjd * sin(Buffaza);
 	}
-	fur(template_signal, -1);
-	for (int i = 0; i < template_signal.size(); i++)
-		template_signal[i] = pow(abs(template_signal[i]), 2);
-	fur(template_signal, 1);
+	//fur(template_signal, -1);
+	//for (int i = 0; i < template_signal.size(); i++)
+	//	template_signal[i] = pow(abs(template_signal[i]), 2);
+	//fur(template_signal, 1);
 	////////////////////////////////////////////////////////////////////
 	vector<complex<double>> A; A.resize(pow(template_signal.size(), 2));
 	for (int i = 0; i < template_signal.size(); i++)
