@@ -455,6 +455,7 @@ void CSignalsDlg::OnBnClickedButton3()//Функция Uncertainty
 			}
 		}
 	}
+	sp.bit_time = sampling / bitrate;
 	delay_lama = int((double)delay_lama / sp.bit_time);
 	ViewerDraw(ResearchRrr, ResearchRrr.size(), viewer3);
 	SetCursor(LoadCursor(nullptr, IDC_ARROW));
@@ -485,6 +486,7 @@ void CSignalsDlg::OnBnClickedButton5()
 			}
 		}
 	}
+	sp.bit_time = sampling / bitrate;
 	delay_lama = int((double)delay_lama / sp.bit_time);
 	ViewerDraw(ResearchRrr, ResearchRrr.size(), viewer3);
 	SetCursor(LoadCursor(nullptr, IDC_ARROW));
@@ -515,6 +517,7 @@ void CSignalsDlg::OnBnClickedButton9()
 			}
 		}
 	}
+	sp.bit_time = sampling / bitrate;
 	delay_lama = int((double)delay_lama / sp.bit_time);
 	ViewerDraw(ResearchRrr, ResearchRrr.size(), viewer3);
 	SetCursor(LoadCursor(nullptr, IDC_ARROW));
