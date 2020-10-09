@@ -228,6 +228,7 @@
     <ClInclude Include="rwfile.h" />
     <ClInclude Include="Signals.h" />
     <ClInclude Include="SignalsDlg.h" />
+    <ClInclude Include="Signals_helper.h" />
     <ClInclude Include="Signals_Processing.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>

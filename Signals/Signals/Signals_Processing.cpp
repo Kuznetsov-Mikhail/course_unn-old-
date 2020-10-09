@@ -686,7 +686,7 @@ void Signals_Processing::Uncertainty(vector<float>& mass, signal_buf& Signal1, s
 	}
 }
 
-void Signals_Processing::FAST_FUR(vector <complex<double>> Signal, vector <complex<double>>& Spectr, bool is)
+void Signals_Processing::FAST_FUR(vector <complex<double>> Signal, vector <complex<double>>& Spectr, int is)
 {
 	Spectr.clear();
 	int k = step2(Signal.size());

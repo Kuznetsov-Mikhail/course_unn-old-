@@ -5,6 +5,7 @@
 #include <vector>
 #include <math.h>
 #include "Signals_Processing.h"
+#include "Signals_helper.h"
 #include "ChartViewer.h"
 #include <fstream>
 #include <iostream>
@@ -148,6 +149,8 @@ public:
 		ImSignal2Rch = ImSignal2;
 		if (Dopler_On)	sp.Dopler(ImSignal2, f_dop, sp.average_frequency);
 		sp.addNoize(ImSignal2, noize_v);
+		ImSpectr1.clear();
+		ImSpectr2.clear();
 		sp.FAST_FUR(ImSignal1, ImSpectr1, -1);
 		sp.FAST_FUR(ImSignal2, ImSpectr2, -1);
 		sp.spVertex(ImSpectr1);
@@ -158,5 +161,8 @@ public:
 	/// <summary>
 	/// VI COURSE
 	/// </summary>
+	Signals_helper MySignals;
+	void TrueViewerDraw(vector<vector<double>>& data, double Xmin, double Xmax, CChartViewer& viewer_num, string PathPic, bool podpisi);
 	afx_msg void OnBnClickedButton10();
+	afx_msg void OnBnClickedButton11();
 };

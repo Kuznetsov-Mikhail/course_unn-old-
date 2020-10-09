@@ -19,14 +19,14 @@
 
 CSignalsDlg::CSignalsDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_SIGNALS_DIALOG, pParent)
-	, bitrate(5000000)
-	, sampling(350000000)
+	, bitrate(5e6)
+	, sampling(35e7)
 	, bits_size(1000)
 	, delay_size(100)
 	, delay_lama(0)
 	, Signals_or_Spectrs(FALSE)
 	, noize_lvl(100)
-	, f_dop(30000)
+	, f_dop(3e4)
 	, Dopler_On(TRUE)
 	, scramble(TRUE)
 	, Signals_generator_type(TRUE)
@@ -72,6 +72,7 @@ BEGIN_MESSAGE_MAP(CSignalsDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON8, &CSignalsDlg::OnBnClickedButton8)
 	ON_BN_CLICKED(IDC_BUTTON9, &CSignalsDlg::OnBnClickedButton9)
 	ON_BN_CLICKED(IDC_BUTTON10, &CSignalsDlg::OnBnClickedButton10)
+	ON_BN_CLICKED(IDC_BUTTON11, &CSignalsDlg::OnBnClickedButton11)
 END_MESSAGE_MAP()
 
 
@@ -857,8 +858,107 @@ void CSignalsDlg::OnBnClickedButton8()
 
 
 
-//6course
-void CSignalsDlg::OnBnClickedButton10()
+//VIcourse
+void CSignalsDlg::TrueViewerDraw(vector<vector<double>>& data, double Xmin, double Xmax, CChartViewer& viewer_num, string PathPic, bool podpisi)
 {
-	
+	if (data.empty())return;
+	// In this example, we simply use random data for the 3 data series.
+	vector<DoubleArray> Arr_dataReal; Arr_dataReal.resize(data.size());
+	for (int i = 0; i < data.size(); i++)
+	{
+		Arr_dataReal[i] = vectorToArray(data[i]);
+	}
+
+	vector<double>Datatime;
+
+	double OXstep = (Xmax - Xmin) / (data[0].size() - 1);
+	for (double i = Xmin; i <= Xmax; i += OXstep)Datatime.push_back(i);
+	DoubleArray timeStamps = vectorToArray(Datatime);
+
+	// Create a XYChart object of size 600 x 400 pixels
+	XYChart* c = new XYChart(850, 240);
+
+	// Add a title box using grey (0x555555) 20pt Arial font
+	//c->addTitle("", "arial.ttf", 20, 0x555555);
+
+	// Set the plotarea at (70, 70) and of size 500 x 300 pixels, with transparent background and
+	// border and light grey (0xcccccc) horizontal grid lines
+	c->setPlotArea(70, 50, 700, 120, Chart::Transparent, -1, Chart::Transparent, 0xcccccc);
+
+	// Add a legend box with horizontal layout above the plot area at (70, 35). Use 12pt Arial font,
+	// transparent background and border, and line style legend icon.
+	LegendBox* b = c->addLegend(20, 5, false, "arial.ttf", 12);
+	b->setBackground(Chart::Transparent, Chart::Transparent);
+	b->setLineStyleKey();
+
+	// Set axis label font to 12pt Arial
+	c->xAxis()->setLabelStyle("arial.ttf", 12);
+	c->yAxis()->setLabelStyle("arial.ttf", 12);
+
+	// Set the x and y axis stems to transparent, and the x-axis tick color to grey (0xaaaaaa)
+	c->xAxis()->setColors(Chart::TextColor, Chart::TextColor, Chart::TextColor, 0xaaaaaa);
+	c->yAxis()->setColors(Chart::TextColor);
+
+	// Set the major/minor tick lengths for the x-axis to 10 and 0.
+	c->xAxis()->setTickLength(10, 0);
+
+	// For the automatic axis labels, set the minimum spacing to 80/40 pixels for the x/y axis.
+	c->xAxis()->setTickDensity(80);
+	c->yAxis()->setTickDensity(40);
+
+	// Add a title to the y axis using dark grey (0x555555) 14pt Arial font
+	c->yAxis()->setTitle("", "arial.ttf", 14, 0x555555);
+
+	// Add a line layer to the chart with 3-pixel line width
+	LineLayer* layer = c->addLineLayer();
+	layer->setLineWidth(3);
+	//
+	if (podpisi) layer->setDataLabelFormat("{value|2} ");
+	// Add 3 data series to the line layer
+	for (int i = 0; i < Arr_dataReal.size(); i++)
+	{
+		stringstream ss;
+		ss << "Data " << i;
+		string name = ss.str();
+		layer->addDataSet(Arr_dataReal[i], -1, name.c_str());
+	}
+	// The x-coordinates for the line layer
+	layer->setXData(timeStamps);
+	viewer_num.setChart(c);
+	const char* chPathPic = PathPic.c_str();
+	c->makeChart(chPathPic);
+	delete c;
+}
+void CSignalsDlg::OnBnClickedButton10()
+{	
+	UpdateData(1);
+	SetCursor(LoadCursor(nullptr, IDC_WAIT));
+	MySignals.Init(sampling, 1119e6, bitrate, bits_size, noize_lvl, 2, 0.3);
+	MySignals.GetSignals();
+	sp.addNoize(MySignals.CSignal1, noize_lvl);
+	sp.addNoize(MySignals.CSignal2, noize_lvl);
+	ImSignal1 = MySignals.CSignal1;
+	ImSignal2 = MySignals.CSignal2;
+	ImSpectr1.clear();
+	ImSpectr2.clear();
+	sp.FAST_FUR(ImSignal1, ImSpectr1, -1);
+	sp.FAST_FUR(ImSignal2, ImSpectr2, -1);
+	sp.spVertex(ImSpectr1);
+	sp.spVertex(ImSpectr2);
+	OnBnClickedCheck1();
+	SetCursor(LoadCursor(nullptr, IDC_ARROW));
+	UpdateData(0);
+}
+
+void CSignalsDlg::OnBnClickedButton11()
+{
+	sp.nonlinear_filtering(ImSignal1, 1119e6, sampling, bitrate);
+	sp.nonlinear_filtering(ImSignal2, 1119e6, sampling, bitrate);
+	ImSpectr1.clear();
+	ImSpectr2.clear();
+	sp.FAST_FUR(ImSignal1, ImSpectr1, -1);
+	sp.FAST_FUR(ImSignal2, ImSpectr2, -1);
+	sp.spVertex(ImSpectr1);
+	sp.spVertex(ImSpectr2);
+	OnBnClickedCheck1();
 }

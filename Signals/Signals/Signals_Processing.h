@@ -103,7 +103,7 @@ public:
 	void Linear_interpolation(vector<double>& Old_Data, vector<double>& New_Data, double step);//линейна€ интерпол€ци€
 	void Cubic_Inter_spline(vector<double>& Old_Data, vector<double>& New_Data, double step);
 
-	void FAST_FUR(vector <complex<double>> Signal, vector <complex<double>>& Spectr, bool is);
+	void FAST_FUR(vector <complex<double>> Signal, vector <complex<double>>& Spectr, int is);
 	void spVertex(vector <complex<double>>& Spectr);
 
 	/*
@@ -147,5 +147,7 @@ public:
 	void trans_matr(const vector<vector<complex<double>>>& v1,
 		const vector<vector<complex<double>>>& v2, vector<vector<complex<double>>>& v3);
 	void transpose_conj(vector<vector<complex<double>>>& v1);
+	int nonlinear_filtering(vector<complex<double>>& signal, double f0, double sampling, double bitrate);
+	void vec_to_2dvec(const vector<complex<double>>& v1, vector<vector<complex<double>>>& v2);
 };
 

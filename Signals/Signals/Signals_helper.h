@@ -46,105 +46,13 @@ private:
 	}
 	void GetData(vector<bool>& data)
 	{
-		data.resize(bits_size*2);
+		data.resize(bits_size * 2);
 		for (int i = 0; i < data.size(); i++)
 		{
 			double kkk = 0. + 1000. * rand() / RAND_MAX;
 			if (kkk > 500) data[i] = true;
 			else data[i] = false;
 		}
-	}
-	//Амплитудная мдуляция
-	void GetSignals_AM()
-	{
-		Signal1.clear();
-		Signal2.clear();
-		vector<bool> data;
-		GetData(data);
-		bit_time = sampling / bitrate; //кол-во отчётов на 1 бит
-		int N1 = bit_time * bits_size; //Signal1 size
-		int N2 = N1 * 2; //Signal2 size
-		int delay_size = delay * N1;
-		vector<bool>obraz; obraz.resize(N2);
-		///////////////////////////////////////////////////
-		/// for b_bit
-		int buf_ii = 0;
-		bool bit_buf;
-		int l = 0;
-		bit_buf = data[l];
-		for (int i = 0; i < obraz.size(); i++)
-		{
-			buf_ii++;
-			obraz[i] = bit_buf;
-			if (buf_ii == bit_time)
-			{
-				buf_ii = 0;
-				l++; if (l == data.size())l--;
-				bit_buf = data[l];
-			}
-		}
-		//////////
-		Signal1.resize(N1);
-		Signal2.resize(N2);
-		double Buffaza = 0;
-		//////////
-		for (int i = 0; i < obraz.size(); i++)
-		{
-			double AAA;
-			Buffaza += (2 * M_PI * (f_0) / sampling);
-			if (obraz[i])AAA = 1.;
-			else AAA = 0.7;
-			Signal2[i] = AAA * cos(Buffaza);
-		}
-		for (int i = 0; i < N1; i++) Signal1[i]= Signal2[i + delay_size];
-	}
-	//Фазовая модуляция (2)
-	void GetSignals_FM2()
-	{
-		Signal1.clear();
-		Signal2.clear();
-		vector<bool> data;
-		GetData(data);
-		bit_time = sampling / bitrate; //кол-во отчётов на 1 бит
-		int N1 = bit_time * bits_size; //Signal1 size
-		int N2 = N1 * 2; //Signal2 size
-		int delay_size = delay * N1;
-		vector<bool>obraz; obraz.resize(N2);
-		///////////////////////////////////////////////////
-		/// for b_bit
-		int buf_ii = 0;
-		bool bit_buf;
-		int l = 0;
-		bit_buf = data[l];
-		for (int i = 0; i < obraz.size(); i++)
-		{
-			buf_ii++;
-			obraz[i] = bit_buf;
-			if (buf_ii == bit_time)
-			{
-				buf_ii = 0;
-				l++; if (l == data.size())l--;
-				bit_buf = data[l];
-			}
-		}
-		//////////
-		Signal1.resize(N1);
-		Signal2.resize(N2);
-		double Buffaza = 0;
-		bit_buf = obraz[0];
-		//////////
-		for (int i = 0; i < obraz.size(); i++)
-		{
-			if (obraz[i] == bit_buf)Buffaza += (2 * M_PI * (f_0) / sampling);
-			else
-			{
-				Buffaza += (2 * M_PI * (f_0) / sampling) + M_PI;
-				bit_buf = obraz[i];
-			}
-			NormalPhaza(Buffaza);
-			Signal2[i] = cos(Buffaza);
-		}
-		for (int i = 0; i < N1; i++) Signal1[i] = Signal2[i + delay_size];
 	}
 	//MSK частотная модуляция
 	void GetSignals_MSK()
@@ -192,6 +100,52 @@ private:
 			Signal2[i] = cos(Buffaza);
 		}
 		for (int i = 0; i < N1; i++) Signal1[i] = Signal2[i + delay_size];
+	}
+	void GetCSignals_MSK()
+	{
+		CSignal1.clear();
+		CSignal2.clear();
+		vector<bool> data;
+		GetData(data);
+		bit_time = sampling / bitrate; //кол-во отчётов на 1 бит
+		int N1 = bit_time * bits_size; //Signal1 size
+		int N2 = N1 * 2; //Signal2 size
+		int delay_size = delay * N1;
+		vector<bool>obraz; obraz.resize(N2);
+		///////////////////////////////////////////////////
+		/// for b_bit
+		int buf_ii = 0;
+		bool bit_buf;
+		int l = 0;
+		bit_buf = data[l];
+		for (int i = 0; i < obraz.size(); i++)
+		{
+			buf_ii++;
+			obraz[i] = bit_buf;
+			if (buf_ii == bit_time)
+			{
+				buf_ii = 0;
+				l++; if (l == data.size())l--;
+				bit_buf = data[l];
+			}
+		}
+		//////////
+		CSignal1.resize(N1);
+		CSignal2.resize(N2);
+		double Buffaza = 0;
+		//////////
+		double delta4astota = bitrate / 4;
+		for (int i = 0; i < obraz.size(); i++)
+		{
+			if (obraz[i])Buffaza += (2 * M_PI * (f_0 + delta4astota) / sampling);
+			else
+			{
+				Buffaza += (2 * M_PI * (f_0 - delta4astota) / sampling);
+			}
+			NormalPhaza(Buffaza);
+			CSignal2[i] = cos(Buffaza) +comjd*sin(Buffaza);
+		}
+		for (int i = 0; i < N1; i++) CSignal1[i] = CSignal2[i + delay_size];
 	}
 	void fur(vector <complex <double>>& data, int is)
 	{
@@ -244,9 +198,9 @@ private:
 				data[i] /= (double)n;
 			}
 	}
-/// <summary>
-/// ////////////////////////////////////////PUBLIC////////////////////////////////////////////
-/// </summary>
+	/// <summary>
+	/// ////////////////////////////////////////PUBLIC////////////////////////////////////////////
+	/// </summary>
 public:
 	//кол-во отчётов на 1 бит
 	int bit_time;
@@ -265,10 +219,11 @@ public:
 	// Задержка (отсчёты)
 	double delay;
 
-	vector<double> Signal1, Signal2;
+	private: vector<double> Signal1, Signal2;
+	public: vector<complex<double>> CSignal1, CSignal2;
 
-	Signal() {}
-	virtual ~Signal() {}
+	Signals_helper() {}
+	virtual ~Signals_helper() {}
 	void Init(int _sampling, int _f_0, int _bitrate, int _bits_size, double _SNR, int _mod_type, double _delay)
 	{
 		sampling = _sampling;
@@ -282,20 +237,7 @@ public:
 	//Получение сигнала
 	void GetSignals()
 	{
-		switch (mod_type)
-		{
-		case 1:
-			GetSignals_AM();
-			break;
-		case 2:
-			GetSignals_FM2();
-			break;
-		case 3:
-			GetSignals_MSK();
-			break;
-		default:
-			break;
-		}
+		GetCSignals_MSK();
 	}
 	void addNoize(vector<double>& mass, double NoizeV)
 	{
@@ -346,7 +288,7 @@ public:
 			for (int j = 0; j < N1; j++)
 				buffer += Signal1[j] * Signal2[i + j];
 			MMP[i] = abs(buffer);
-		}		
+		}
 	}
 	double GetMax(const vector<double>& data, int& number)
 	{
@@ -386,7 +328,7 @@ public:
 	void spCleaner(vector <complex<double>>& Spectr)
 	{
 		int size = Spectr.size();
-		int start1 = (((double)f_0 - (double)f_0*0.7) / (double)sampling) * size;
+		int start1 = (((double)f_0 - (double)f_0 * 0.7) / (double)sampling) * size;
 		int finish1 = (((double)f_0 + (double)f_0 * 0.7) / (double)sampling) * size;
 		if (start1 < 0)start1 = 0; if (start1 > size)start1 = size;
 		if (finish1 < 0)finish1 = 0; if (finish1 > size)finish1 = size;
@@ -394,10 +336,10 @@ public:
 		int finish2 = Spectr.size() - start1;
 		for (int i = 0; i < start1; i++)Spectr[i] = 0;
 		for (int i = finish1; i < start2; i++)Spectr[i] = 0;
-		for (int i = finish2; i < Spectr.size(); i++)Spectr[i] = 0;		
+		for (int i = finish2; i < Spectr.size(); i++)Spectr[i] = 0;
 
-	/*	int dot1 = (((double)f_0) / (double)sampling) * size; dot1 *= 4;
-		int dot2 = Spectr.size() - dot1;
-		for (int i = dot1; i < dot2; i++)Spectr[i] = 0;*/
+		/*	int dot1 = (((double)f_0) / (double)sampling) * size; dot1 *= 4;
+			int dot2 = Spectr.size() - dot1;
+			for (int i = dot1; i < dot2; i++)Spectr[i] = 0;*/
 	}
 };
