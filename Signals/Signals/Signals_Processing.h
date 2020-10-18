@@ -97,6 +97,18 @@ public:
 	double Uncertainty_ipp_jtids(int delay_size, const vector<complex<double>>& ImSignal1, \
 		const  vector<complex<double>>& ImSignal2, \
 		int ksum, vector <double>& ResearchRrr, int& found_delay, int& delay_lama);
+	/*‘ункци€ неопределЄнности дл€ JTIDS сигналов 
+	с применением нелинейной фильтрации дл€ канальных сигналов
+	delay_size - заданна€ задержка сигналов в битах
+	ImSignal1 - опорный сигнал
+	ImSignal2 - исследуемый сигнал
+	delay_lama - задержка
+	return peak_intensity
+	*/
+	double Uncertainty_ipp_jtids_with_nl_filtering(int delay_size, const vector<complex<double>>& ImSignal1, \
+		const  vector<complex<double>>& ImSignal2, \
+		int ksum, vector <double>& ResearchRrr, int& found_delay, int& delay_lama);
+
 
 	void Dopler(vector <complex<double>>& Signal, double shift, double center_frequency);
 	void InterSpline(vector<double>& Signal, vector<double>& NewSignal, double step);//интерпол€ци€ сплайном
@@ -148,6 +160,7 @@ public:
 		const vector<vector<complex<double>>>& v2, vector<vector<complex<double>>>& v3);
 	void transpose_conj(vector<vector<complex<double>>>& v1);
 	int nonlinear_filtering(vector<complex<double>>& signal, double f0, double sampling, double bitrate);
+	int nonlinear_filtering(signal_buf& signal, double f0, double sampling, double bitrate);
 	void vec_to_2dvec(const vector<complex<double>>& v1, vector<vector<complex<double>>>& v2);
 };
 

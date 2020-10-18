@@ -73,6 +73,7 @@ BEGIN_MESSAGE_MAP(CSignalsDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON9, &CSignalsDlg::OnBnClickedButton9)
 	ON_BN_CLICKED(IDC_BUTTON10, &CSignalsDlg::OnBnClickedButton10)
 	ON_BN_CLICKED(IDC_BUTTON11, &CSignalsDlg::OnBnClickedButton11)
+	ON_BN_CLICKED(IDC_BUTTON12, &CSignalsDlg::OnBnClickedButton12)
 END_MESSAGE_MAP()
 
 
@@ -932,7 +933,7 @@ void CSignalsDlg::TrueViewerDraw(vector<vector<double>>& data, double Xmin, doub
 	c->makeChart(chPathPic);
 	delete c;
 }
-void CSignalsDlg::OnBnClickedButton10()
+void CSignalsDlg::OnBnClickedButton10() // Test signals
 {	
 	UpdateData(1);
 	SetCursor(LoadCursor(nullptr, IDC_WAIT));
@@ -952,8 +953,7 @@ void CSignalsDlg::OnBnClickedButton10()
 	SetCursor(LoadCursor(nullptr, IDC_ARROW));
 	UpdateData(0);
 }
-
-void CSignalsDlg::OnBnClickedButton11()
+void CSignalsDlg::OnBnClickedButton11()// Test filtering
 {
 	sp.nonlinear_filtering(ImSignal1, 1119e6, sampling, bitrate);
 	sp.nonlinear_filtering(ImSignal2, 1119e6, sampling, bitrate);
@@ -964,4 +964,15 @@ void CSignalsDlg::OnBnClickedButton11()
 	sp.spVertex(ImSpectr1);
 	sp.spVertex(ImSpectr2);
 	OnBnClickedCheck1();
+}
+void CSignalsDlg::OnBnClickedButton12()
+{
+	UpdateData(TRUE);
+	SetCursor(LoadCursor(nullptr, IDC_WAIT));
+	updateSP();
+	int found_delay;
+	double pi = sp.Uncertainty_ipp_jtids_with_nl_filtering(delay_size, ImSignal1, ImSignal2, _k, ResearchRrr, found_delay, delay_lama);
+	ViewerDraw(ResearchRrr, ResearchRrr.size(), viewer3);
+	SetCursor(LoadCursor(nullptr, IDC_ARROW));
+	UpdateData(FALSE);
 }
