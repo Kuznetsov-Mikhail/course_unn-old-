@@ -32,6 +32,7 @@ CSignalsDlg::CSignalsDlg(CWnd* pParent /*=nullptr*/)
 	, Signals_generator_type(TRUE)
 	, test_time_cr(0)
 	, _k(32)
+	, pi_on_edit(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -55,6 +56,7 @@ void CSignalsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_CHECK5, Signals_generator_type);
 	DDX_Text(pDX, IDC_EDIT9, test_time_cr);
 	DDX_Text(pDX, IDC_EDIT8, _k);
+	DDX_Text(pDX, IDC_EDIT10, pi_on_edit);
 }
 
 BEGIN_MESSAGE_MAP(CSignalsDlg, CDialogEx)
@@ -553,7 +555,7 @@ void CSignalsDlg::OnBnClickedButton2()
 	SetCursor(LoadCursor(nullptr, IDC_WAIT));
 	updateSP();
 	int found_delay;
-	double pi = sp.Uncertainty_ipp_jtids(delay_size, ImSignal1, ImSignal2, _k, ResearchRrr, found_delay, delay_lama);
+	pi_on_edit = sp.Uncertainty_ipp_jtids(delay_size, ImSignal1, ImSignal2, _k, ResearchRrr, found_delay, delay_lama);
 	ViewerDraw(ResearchRrr, ResearchRrr.size(), viewer3);
 	SetCursor(LoadCursor(nullptr, IDC_ARROW));
 	UpdateData(FALSE);
@@ -971,7 +973,7 @@ void CSignalsDlg::OnBnClickedButton12()
 	SetCursor(LoadCursor(nullptr, IDC_WAIT));
 	updateSP();
 	int found_delay;
-	double pi = sp.Uncertainty_ipp_jtids_with_nl_filtering(delay_size, ImSignal1, ImSignal2, _k, ResearchRrr, found_delay, delay_lama);
+	pi_on_edit = sp.Uncertainty_ipp_jtids_with_nl_filtering(delay_size, ImSignal1, ImSignal2, _k, ResearchRrr, found_delay, delay_lama);
 	ViewerDraw(ResearchRrr, ResearchRrr.size(), viewer3);
 	SetCursor(LoadCursor(nullptr, IDC_ARROW));
 	UpdateData(FALSE);
