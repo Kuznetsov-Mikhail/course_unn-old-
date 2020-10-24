@@ -501,52 +501,9 @@ m570: IP = 0;
 
 	return IP;
 }
-int Signals_Processing::nonlinear_filtering(vector<complex<double>>& signal, double f0, double sampling, double bitrate)
+int Signals_Processing::nonlinear_filtering(vector<complex<double>>& signal, double f0, double sampling, double bitrate, const vector<vector<complex<double>>>& AA)
 {
 	int win_size = sampling / bitrate;
-	if (win_size < 0)return -1;
-	win_size = step2(win_size);
-	vector<complex<double>> template_signal;
-	template_signal.resize(win_size);
-	Buffaza = 0;
-	for (int i = 0; i < template_signal.size(); i++)
-	{
-		Buffaza += (2 * M_PI * f0 / sampling);
-		NormalPhaza(Buffaza);
-		template_signal[i] = cos(Buffaza) + comjd * sin(Buffaza);
-	}
-	//fur(template_signal, -1);
-	//for (int i = 0; i < template_signal.size(); i++)
-	//	template_signal[i] = pow(abs(template_signal[i]), 2);
-	//fur(template_signal, 1);
-	////////////////////////////////////////////////////////////////////
-	vector<complex<double>> A; A.resize(pow(template_signal.size(), 2));
-	for (int i = 0; i < template_signal.size(); i++)
-	{
-		for (int j = 0; j < template_signal.size(); j++)
-		{
-			A[i * template_signal.size() + j] = template_signal[abs(i - j)];
-		}
-	}
-	vector<double> S; S.resize(win_size);
-	vector<complex<double>> U, V; U.resize(win_size * win_size); V.resize(win_size * win_size);
-	int error = CSVD(A, win_size, win_size, win_size, win_size, S, U, V);
-	if (error == -1)return -1;
-	////////////////////////////////////////////////////////////////////
-	vector<vector<complex<double>>> SS, UU, VV, AA;
-	vec_to_2dvec(U, UU);
-	vec_to_2dvec(V, VV);
-	transpose_conj(UU);
-	transpose_conj(VV);
-	for (int i = 0; i < S.size(); i++) if (abs(S[i] > 0.001))S[i] = 1. / S[i];
-	SS.resize(win_size);
-	for (int i = 0; i < win_size; i++)
-	{
-		SS[i].resize(win_size);
-		SS[i][i] = S[i];
-	}
-	trans_matr(VV, SS, AA);
-	trans_matr(AA, UU, AA);
 	////////////////////////////////////////////////////////////////////
 	for (int i = 0; i < signal.size(); i++)
 	{
@@ -566,12 +523,37 @@ int Signals_Processing::nonlinear_filtering(vector<complex<double>>& signal, dou
 		}
 		else signal[i] = 0;
 	}
+	return 0;
 }
-int Signals_Processing::nonlinear_filtering(signal_buf& signal, double f0, double sampling, double bitrate)
+int Signals_Processing::nonlinear_filtering(signal_buf& signal, double f0, double sampling, double bitrate, const vector<vector<complex<double>>>& AA)
+{
+	int win_size = sampling / bitrate;
+	////////////////////////////////////////////////////////////////////
+	for (int i = 0; i < signal.size(); i++)
+	{
+		if (i < signal.size() - win_size)
+		{
+			vector<vector<complex<double>>> buffer, out; buffer.resize(win_size);
+			for (int j = i; j < i + win_size; j++)
+			{
+				buffer[j - i].resize(1);
+				buffer[j - i][0] = signal[j];
+			}
+			transpose_conj(buffer);
+			trans_matr(buffer, AA, out);
+			transpose_conj(buffer);
+			trans_matr(out, buffer, out);
+			signal[i] = out[0][0];
+		}
+		else signal[i] = 0;
+	}
+	return 0;
+}
+int Signals_Processing::pre_nonlinear_filtering(double f0, double sampling, double bitrate, \
+	vector<vector<complex<double>>>& AA)
 {
 	int win_size = sampling / bitrate;
 	if (win_size < 0)return -1;
-	win_size = step2(win_size);
 	signal_buf template_signal;
 	template_signal.resize(win_size);
 	Buffaza = 0;
@@ -595,7 +577,7 @@ int Signals_Processing::nonlinear_filtering(signal_buf& signal, double f0, doubl
 	int error = CSVD(A, win_size, win_size, win_size, win_size, S, U, V);
 	if (error == -1)return -1;
 	////////////////////////////////////////////////////////////////////
-	vector<vector<complex<double>>> SS, UU, VV, AA;
+	vector<vector<complex<double>>> SS, UU, VV; AA.clear();
 	vec_to_2dvec(U, UU);
 	vec_to_2dvec(V, VV);
 	transpose_conj(UU);
@@ -610,22 +592,5 @@ int Signals_Processing::nonlinear_filtering(signal_buf& signal, double f0, doubl
 	trans_matr(VV, SS, AA);
 	trans_matr(AA, UU, AA);
 	////////////////////////////////////////////////////////////////////
-	for (int i = 0; i < signal.size(); i++)
-	{
-		if (i < signal.size() - win_size)
-		{
-			vector<vector<complex<double>>> buffer, out; buffer.resize(win_size);
-			for (int j = i; j < i + win_size; j++)
-			{
-				buffer[j - i].resize(1);
-				buffer[j - i][0] = signal[j];
-			}
-			transpose_conj(buffer);
-			trans_matr(buffer, AA, out);
-			transpose_conj(buffer);
-			trans_matr(out, buffer, out);
-			signal[i] = out[0][0];
-		}
-		else signal[i] = 0;
-	}
+	return 0;
 }

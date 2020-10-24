@@ -555,59 +555,6 @@ double  Signals_Processing::Uncertainty_ipp_jtids(int delay_size, const vector<c
 	double pi = peak_intensity(ResearchRrr);
 	return pi;
 }
-double  Signals_Processing::Uncertainty_ipp_jtids_with_nl_filtering(int delay_size, const vector<complex<double>>& ImSignal1, const vector<complex<double>>& ImSignal2, int ksum, vector <double>& ResearchRrr, int& found_delay, int& delay_lama)
-{
-	//////////////////// Подготовка входных сигналов
-	signal_buf signal1; signal1.resize(ImSignal1.size());
-	signal_buf signal2; signal2.resize(ImSignal2.size());
-	for (int i = 0; i < ImSignal1.size(); i++)
-	{
-		complex<float> buf; buf = ImSignal1[i].real() + comjd * ImSignal1[i].imag();
-		signal1[i] = (buf);
-	}
-	for (int i = 0; i < ImSignal2.size(); i++)
-	{
-		complex<float> buf; buf = ImSignal2[i].real() + comjd * ImSignal2[i].imag();
-		signal2[i] = (buf);
-	}
-	//////////////////// fast_convolution
-	fast_convolution(signal1, this->fir_s, this->FHSS_Signals_initial_fl, GPU_FD);
-	fast_convolution(signal2, this->fir_s, this->FHSS_Signals_fl, GPU_FD);
-
-	ResearchRrr.clear();
-	ResearchRrr.resize(this->FHSS_Signals_initial_fl[0].size());
-	for (int i = 0; i < this->operating_frequencies.size(); i++)
-	{
-		this->nonlinear_filtering(this->FHSS_Signals_initial_fl[i], operating_frequencies[i] * 1e6, this->sampling, this->BrV);
-		this->nonlinear_filtering(this->FHSS_Signals_fl[i], operating_frequencies[i] * 1e6, this->sampling, this->BrV);
-		vector<float>buffer;
-		this->Uncertainty_ipp(buffer, this->FHSS_Signals_initial_fl[i], this->FHSS_Signals_fl[i], ksum);
-#pragma omp parallel for
-		for (int j = 0; j < ResearchRrr.size(); j++)
-		{
-			ResearchRrr[j] += buffer[j];
-		}
-	}
-	if (ResearchRrr.size() != NULL)
-	{
-		double buff_ResearchRrr = 0;
-		for (int i = 0; i < ResearchRrr.size(); i++)
-		{
-			if (ResearchRrr[i] > buff_ResearchRrr)
-			{
-				buff_ResearchRrr = ResearchRrr[i]; delay_lama = i;
-			}
-		}
-	}
-	this->FHSS_Signals_initial_fl.clear();
-	this->FHSS_Signals_fl.clear();
-	found_delay = delay_lama; //in counts 
-	delay_lama = int((double)delay_lama / this->bit_time);// in bits
-	int expected_delay = delay_size * this->bit_time;
-	int delta_error = abs(expected_delay - found_delay);
-	double pi = peak_intensity(ResearchRrr);
-	return pi;
-}
 
 void Signals_Processing::Uncertainty_omp(vector<double>& mass, vector<complex<double>> Signal1, vector<complex<double>> Signal2, int ksum)
 {
@@ -1454,4 +1401,65 @@ double Signals_Processing::peak_intensity(vector<double> mas)
 		sigma += pow(mas[i] - sum, 2);
 	}
 	return (localMax - sum) / sqrt(sigma);
+}
+
+double Signals_Processing::Correlation_omp_jtids_with_nl_filtering(int delay_size, const vector<complex<double>>& ImSignal1, \
+	const  vector<complex<double>>& ImSignal2, \
+	vector <double>& ResearchRrr, int& found_delay, int& delay_lama)
+{
+	//////////////////// Подготовка входных сигналов
+	signal_buf signal1; signal1.resize(ImSignal1.size());
+	signal_buf signal2; signal2.resize(ImSignal2.size());
+	for (int i = 0; i < ImSignal1.size(); i++)
+	{
+		complex<float> buf; buf = ImSignal1[i].real() + comjd * ImSignal1[i].imag();
+		signal1[i] = (buf);
+	}
+	for (int i = 0; i < ImSignal2.size(); i++)
+	{
+		complex<float> buf; buf = ImSignal2[i].real() + comjd * ImSignal2[i].imag();
+		signal2[i] = (buf);
+	}
+	//////////////////// fast_convolution
+	fast_convolution(signal1, this->fir_s, this->FHSS_Signals_initial_fl, GPU_FD);
+	fast_convolution(signal2, this->fir_s, this->FHSS_Signals_fl, GPU_FD);
+#pragma omp parallel for
+	for (int i = 0; i < this->operating_frequencies.size(); i++)
+	{
+		vector<vector<complex<double>>> AA;
+		this->pre_nonlinear_filtering(operating_frequencies[i] * 1e6, this->sampling, this->BrV, AA);
+		this->nonlinear_filtering(this->FHSS_Signals_initial_fl[i], operating_frequencies[i] * 1e6, this->sampling, this->BrV,AA);
+		this->nonlinear_filtering(this->FHSS_Signals_fl[i], operating_frequencies[i] * 1e6, this->sampling, this->BrV,AA);
+	}
+	ResearchRrr.clear();
+	ResearchRrr.resize(this->FHSS_Signals_initial_fl[0].size());
+	for (int i = 0; i < this->operating_frequencies.size(); i++)
+	{
+		vector<double>buffer;
+		this->Correlation_omp(buffer, this->FHSS_Signals_initial_fl[i], this->FHSS_Signals_fl[i]);
+#pragma omp parallel for
+		for (int j = 0; j < ResearchRrr.size(); j++)
+		{
+			ResearchRrr[j] += buffer[j];
+		}
+	}
+	if (ResearchRrr.size() != NULL)
+	{
+		double buff_ResearchRrr = 0;
+		for (int i = 0; i < ResearchRrr.size(); i++)
+		{
+			if (ResearchRrr[i] > buff_ResearchRrr)
+			{
+				buff_ResearchRrr = ResearchRrr[i]; delay_lama = i;
+			}
+		}
+	}
+	this->FHSS_Signals_initial_fl.clear();
+	this->FHSS_Signals_fl.clear();
+	found_delay = delay_lama; //in counts 
+	delay_lama = int((double)delay_lama / this->bit_time);// in bits
+	int expected_delay = delay_size * this->bit_time;
+	int delta_error = abs(expected_delay - found_delay);
+	double pi = peak_intensity(ResearchRrr);
+	return pi;
 }

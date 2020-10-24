@@ -76,6 +76,7 @@ BEGIN_MESSAGE_MAP(CSignalsDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON10, &CSignalsDlg::OnBnClickedButton10)
 	ON_BN_CLICKED(IDC_BUTTON11, &CSignalsDlg::OnBnClickedButton11)
 	ON_BN_CLICKED(IDC_BUTTON12, &CSignalsDlg::OnBnClickedButton12)
+	ON_BN_CLICKED(IDC_BUTTON13, &CSignalsDlg::OnBnClickedButton13)
 END_MESSAGE_MAP()
 
 
@@ -555,7 +556,12 @@ void CSignalsDlg::OnBnClickedButton2()
 	SetCursor(LoadCursor(nullptr, IDC_WAIT));
 	updateSP();
 	int found_delay;
+	auto start = steady_clock::now();
 	pi_on_edit = sp.Uncertainty_ipp_jtids(delay_size, ImSignal1, ImSignal2, _k, ResearchRrr, found_delay, delay_lama);
+	auto end = steady_clock::now();
+	auto elapsed = duration_cast<milliseconds>(end - start);
+	test_time_cr = elapsed.count();	
+	sp.vec_normalize(ResearchRrr);
 	ViewerDraw(ResearchRrr, ResearchRrr.size(), viewer3);
 	SetCursor(LoadCursor(nullptr, IDC_ARROW));
 	UpdateData(FALSE);
@@ -861,9 +867,6 @@ void CSignalsDlg::OnBnClickedButton8()
 	SetCursor(LoadCursor(nullptr, IDC_ARROW));
 	UpdateData(FALSE);
 }
-
-
-
 //VIcourse
 void CSignalsDlg::TrueViewerDraw(vector<vector<double>>& data, double Xmin, double Xmax, CChartViewer& viewer_num, string PathPic, bool podpisi)
 {
@@ -957,8 +960,10 @@ void CSignalsDlg::OnBnClickedButton10() // Test signals
 }
 void CSignalsDlg::OnBnClickedButton11()// Test filtering
 {
-	sp.nonlinear_filtering(ImSignal1, 1119e6, sampling, bitrate);
-	sp.nonlinear_filtering(ImSignal2, 1119e6, sampling, bitrate);
+	vector<vector<complex<double>>> AA;
+	sp.pre_nonlinear_filtering(1119e6, sampling, bitrate, AA);
+	sp.nonlinear_filtering(ImSignal1, 1119e6, sampling, bitrate,AA);
+	sp.nonlinear_filtering(ImSignal2, 1119e6, sampling, bitrate,AA);
 	ImSpectr1.clear();
 	ImSpectr2.clear();
 	sp.FAST_FUR(ImSignal1, ImSpectr1, -1);
@@ -973,7 +978,42 @@ void CSignalsDlg::OnBnClickedButton12()
 	SetCursor(LoadCursor(nullptr, IDC_WAIT));
 	updateSP();
 	int found_delay;
-	pi_on_edit = sp.Uncertainty_ipp_jtids_with_nl_filtering(delay_size, ImSignal1, ImSignal2, _k, ResearchRrr, found_delay, delay_lama);
+	auto start = steady_clock::now();
+	pi_on_edit = sp.Correlation_omp_jtids_with_nl_filtering(delay_size, ImSignal1, ImSignal2, ResearchRrr, found_delay, delay_lama);
+	auto end = steady_clock::now();
+	auto elapsed = duration_cast<milliseconds>(end - start);
+	test_time_cr = elapsed.count();
+	sp.vec_normalize(ResearchRrr);
+	ViewerDraw(ResearchRrr, ResearchRrr.size(), viewer3);
+	SetCursor(LoadCursor(nullptr, IDC_ARROW));
+	UpdateData(FALSE);
+}
+void CSignalsDlg::OnBnClickedButton13() //Correlation_omp button
+{
+	UpdateData(TRUE);
+	SetCursor(LoadCursor(nullptr, IDC_WAIT));
+	updateSP();
+	ResearchRrr.clear();
+
+	auto start = steady_clock::now();
+	sp.Correlation_omp(ResearchRrr, ImSignal1, ImSignal2);
+	auto end = steady_clock::now();
+	auto elapsed = duration_cast<milliseconds>(end - start);
+	test_time_cr = elapsed.count();
+	if (ResearchRrr.size() != NULL)
+	{
+		double buff_ResearchRrr = 0;
+		for (int i = 0; i < ResearchRrr.size(); i++)
+		{
+			if (ResearchRrr[i] > buff_ResearchRrr)
+			{
+				buff_ResearchRrr = ResearchRrr[i]; delay_lama = i;
+			}
+		}
+	}
+	sp.bit_time = sampling / bitrate;
+	delay_lama = int((double)delay_lama / sp.bit_time);
+	sp.vec_normalize(ResearchRrr);
 	ViewerDraw(ResearchRrr, ResearchRrr.size(), viewer3);
 	SetCursor(LoadCursor(nullptr, IDC_ARROW));
 	UpdateData(FALSE);

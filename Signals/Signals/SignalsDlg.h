@@ -167,4 +167,5 @@ public:
 	afx_msg void OnBnClickedButton11();
 	afx_msg void OnBnClickedButton12();
 	double pi_on_edit;
+	afx_msg void OnBnClickedButton13();
 };

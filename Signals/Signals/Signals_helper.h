@@ -233,6 +233,10 @@ public:
 		SNR = _SNR;
 		mod_type = _mod_type;
 		delay = _delay;
+		this->CSignal1.clear();
+		this->CSignal2.clear();
+		this->Signal1.clear();
+		this->Signal2.clear();
 	}
 	//Получение сигнала
 	void GetSignals()

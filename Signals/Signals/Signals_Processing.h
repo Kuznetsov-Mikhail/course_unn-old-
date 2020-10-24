@@ -80,6 +80,24 @@ public:
 	//Функция правдоподобия
 	int Correlation(vector<double>& mass, vector<double> Signal1, vector<double> Siganl2);
 	int Correlation(vector<double>& mass, vector<complex<double>> Signal1, vector<complex<double>> Siganl2);
+	template <typename T>
+	void Correlation_omp(vector<double>& mass, const vector<complex<T>>& Signal1, const vector<complex<T>>& Signal2)
+	{
+		mass.resize(Signal2.size() - Signal1.size());
+#pragma omp parallel for
+		for (int i = 0; i < mass.size(); i++)
+		{
+			double RrrReal = 0, RrrImage = 0;
+			for (int j = 0; j < Signal1.size(); j++)
+			{
+
+				RrrReal += (Signal1[j].real() * Signal2[j + i].real()) + (Signal1[j].imag() * Signal2[j + i].imag());
+				RrrImage += (Signal1[j].imag() * Signal2[j + i].real()) - (Signal1[j].real() * Signal2[j + i].imag());
+			}
+			mass[i] = sqrt(pow(RrrReal, 2) + pow(RrrImage, 2));
+			mass[i] /= Signal1.size();
+		}
+	}
 	//Функция неопределённости
 	void Uncertainty(vector<double>& mass, vector<complex<double>> Signal1, vector<complex<double>> Siganl2, int ksum);
 	void Uncertainty(vector<float>& mass, signal_buf& Signal1, signal_buf& Siganl2, int ksum);
@@ -105,9 +123,9 @@ public:
 	delay_lama - задержка
 	return peak_intensity
 	*/
-	double Uncertainty_ipp_jtids_with_nl_filtering(int delay_size, const vector<complex<double>>& ImSignal1, \
+	double Correlation_omp_jtids_with_nl_filtering(int delay_size, const vector<complex<double>>& ImSignal1, \
 		const  vector<complex<double>>& ImSignal2, \
-		int ksum, vector <double>& ResearchRrr, int& found_delay, int& delay_lama);
+		vector <double>& ResearchRrr, int& found_delay, int& delay_lama);
 
 
 	void Dopler(vector <complex<double>>& Signal, double shift, double center_frequency);
@@ -159,8 +177,20 @@ public:
 	void trans_matr(const vector<vector<complex<double>>>& v1,
 		const vector<vector<complex<double>>>& v2, vector<vector<complex<double>>>& v3);
 	void transpose_conj(vector<vector<complex<double>>>& v1);
-	int nonlinear_filtering(vector<complex<double>>& signal, double f0, double sampling, double bitrate);
-	int nonlinear_filtering(signal_buf& signal, double f0, double sampling, double bitrate);
+	int pre_nonlinear_filtering(double f0, double sampling, double bitrate,\
+		vector<vector<complex<double>>> &AA);
+	int nonlinear_filtering(vector<complex<double>>& signal, double f0, double sampling, double bitrate,\
+		const vector<vector<complex<double>>>& AA);
+	int nonlinear_filtering(signal_buf& signal, double f0, double sampling, double bitrate,\
+		const vector<vector<complex<double>>>& AA);
 	void vec_to_2dvec(const vector<complex<double>>& v1, vector<vector<complex<double>>>& v2);
+	//////////////////////////////////////////////
+	template <typename T>
+	void vec_normalize(vector<T>& v)
+	{
+		T maxElement = *std::max_element(v.begin(), v.end());
+#pragma omp parallel for
+		for (int i = 0; i < v.size();i++) v[i] /= maxElement;
+	}
 };
 
