@@ -77,6 +77,7 @@ BEGIN_MESSAGE_MAP(CSignalsDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON11, &CSignalsDlg::OnBnClickedButton11)
 	ON_BN_CLICKED(IDC_BUTTON12, &CSignalsDlg::OnBnClickedButton12)
 	ON_BN_CLICKED(IDC_BUTTON13, &CSignalsDlg::OnBnClickedButton13)
+	ON_BN_CLICKED(IDC_BUTTON14, &CSignalsDlg::OnBnClickedButton14)
 END_MESSAGE_MAP()
 
 
@@ -560,7 +561,7 @@ void CSignalsDlg::OnBnClickedButton2()
 	pi_on_edit = sp.Uncertainty_ipp_jtids(delay_size, ImSignal1, ImSignal2, _k, ResearchRrr, found_delay, delay_lama);
 	auto end = steady_clock::now();
 	auto elapsed = duration_cast<milliseconds>(end - start);
-	test_time_cr = elapsed.count();	
+	test_time_cr = elapsed.count();
 	sp.vec_normalize(ResearchRrr);
 	ViewerDraw(ResearchRrr, ResearchRrr.size(), viewer3);
 	SetCursor(LoadCursor(nullptr, IDC_ARROW));
@@ -939,7 +940,7 @@ void CSignalsDlg::TrueViewerDraw(vector<vector<double>>& data, double Xmin, doub
 	delete c;
 }
 void CSignalsDlg::OnBnClickedButton10() // Test signals
-{	
+{
 	UpdateData(1);
 	SetCursor(LoadCursor(nullptr, IDC_WAIT));
 	MySignals.Init(sampling, 1119e6, bitrate, bits_size, noize_lvl, 2, 0.3);
@@ -962,8 +963,8 @@ void CSignalsDlg::OnBnClickedButton11()// Test filtering
 {
 	vector<vector<complex<double>>> AA;
 	sp.pre_nonlinear_filtering(1119e6, sampling, bitrate, AA);
-	sp.nonlinear_filtering(ImSignal1, 1119e6, sampling, bitrate,AA);
-	sp.nonlinear_filtering(ImSignal2, 1119e6, sampling, bitrate,AA);
+	sp.nonlinear_filtering(ImSignal1, 1119e6, sampling, bitrate, AA);
+	sp.nonlinear_filtering(ImSignal2, 1119e6, sampling, bitrate, AA);
 	ImSpectr1.clear();
 	ImSpectr2.clear();
 	sp.FAST_FUR(ImSignal1, ImSpectr1, -1);
@@ -1017,4 +1018,38 @@ void CSignalsDlg::OnBnClickedButton13() //Correlation_omp button
 	ViewerDraw(ResearchRrr, ResearchRrr.size(), viewer3);
 	SetCursor(LoadCursor(nullptr, IDC_ARROW));
 	UpdateData(FALSE);
+}
+
+//Безразмерный критерий от уровня шума
+void CSignalsDlg::OnBnClickedButton14()
+{
+	UpdateData(TRUE);
+	SetCursor(LoadCursor(nullptr, IDC_WAIT));
+	updateSP();
+
+	vector<double> study;
+	double noize_min_r = -15;
+	double noize_max_r = -5;
+	int noize_dots_r = 10;
+	double noize_step_r = (noize_max_r - noize_min_r) / (noize_dots_r - 1);
+	study.resize(noize_dots_r);
+	int try_size = 5;
+	for (int i = 0; i < noize_dots_r; i++)
+	{
+		double noize_r = noize_min_r + i * noize_step_r;
+		for (int j = 0; j < try_size; j++)
+		{
+			Signals_Gen(bits_size, bits_size / 10, noize_r);
+			int found_delay;
+			double pi = sp.Correlation_omp_jtids_with_nl_filtering(delay_size, ImSignal1, ImSignal2, ResearchRrr, found_delay, delay_lama);
+			study[i] += pi;
+		}
+		study[i] /= try_size;
+	}
+	TVD_vec.clear();
+	TVD_vec.resize(1);
+	TVD_vec[0] = study;
+	TrueViewerDraw(TVD_vec, noize_min_r, noize_max_r, viewer3, "study1.png", true);
+	SetCursor(LoadCursor(nullptr, IDC_ARROW));
+	UpdateData(0);
 }

@@ -168,4 +168,6 @@ public:
 	afx_msg void OnBnClickedButton12();
 	double pi_on_edit;
 	afx_msg void OnBnClickedButton13();
+	afx_msg void OnBnClickedButton14();
+	vector<vector<double>> TVD_vec;
 };
