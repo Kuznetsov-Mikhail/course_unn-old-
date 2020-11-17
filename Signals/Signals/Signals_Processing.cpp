@@ -97,7 +97,7 @@ void Signals_Processing::addNoize(vector < complex<double> >& mass, double Noize
 	//alfa = sqrt(sum_signal / (sum_shum * pow(10., 0.1 * NoizeV)));
 	for (int i = 0; i < mass.size(); i++)
 	{
-		mass[i] += alfa * shum_c[i];
+		mass[i] += alfa * shum_c[i] + alfa * comjd * shum_c[i];
 	}
 }
 
