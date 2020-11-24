@@ -805,8 +805,8 @@ void CSignalsDlg::OnBnClickedButton8()
 
 	veroiatnosti_fhss.clear();
 	//veroiatnosti_un.clear();
-	double noize_min_r = -30;
-	double noize_max_r = -25;
+	double noize_min_r = -15;
+	double noize_max_r = -5;
 	int noize_dots_r = 10;
 	double noize_step_r = (noize_max_r - noize_min_r) / (noize_dots_r - 1);
 	veroiatnosti_fhss.resize(noize_dots_r);
@@ -923,7 +923,7 @@ void CSignalsDlg::TrueViewerDraw(vector<vector<double>>& data, double Xmin, doub
 	LineLayer* layer = c->addLineLayer();
 	layer->setLineWidth(3);
 	//
-	if (podpisi) layer->setDataLabelFormat("{value|2} ");
+	if (podpisi) layer->setDataLabelFormat("{value|4} ");
 	// Add 3 data series to the line layer
 	for (int i = 0; i < Arr_dataReal.size(); i++)
 	{
@@ -962,9 +962,10 @@ void CSignalsDlg::OnBnClickedButton10() // Test signals
 void CSignalsDlg::OnBnClickedButton11()// Test filtering
 {
 	vector<vector<complex<double>>> AA;
-	sp.pre_nonlinear_filtering(1119e6, sampling, bitrate, AA);
-	sp.nonlinear_filtering(ImSignal1, 1119e6, sampling, bitrate, AA);
-	sp.nonlinear_filtering(ImSignal2, 1119e6, sampling, bitrate, AA);
+	int win_size = sampling / bitrate;
+	sp.pre_nonlinear_filtering(1119e6, sampling, bitrate, AA, win_size);
+	sp.nonlinear_filtering(ImSignal1, 1119e6, sampling, bitrate, AA, win_size);
+	sp.nonlinear_filtering(ImSignal2, 1119e6, sampling, bitrate, AA, win_size);
 	ImSpectr1.clear();
 	ImSpectr2.clear();
 	sp.FAST_FUR(ImSignal1, ImSpectr1, -1);
@@ -979,8 +980,9 @@ void CSignalsDlg::OnBnClickedButton12()
 	SetCursor(LoadCursor(nullptr, IDC_WAIT));
 	updateSP();
 	int found_delay;
+	int win_size = _k;
 	auto start = steady_clock::now();
-	pi_on_edit = sp.Correlation_omp_jtids_with_nl_filtering(delay_size, ImSignal1, ImSignal2, ResearchRrr, found_delay, delay_lama);
+	pi_on_edit = sp.Correlation_omp_jtids_with_nl_filtering(delay_size, ImSignal1, ImSignal2, ResearchRrr, found_delay, delay_lama, win_size);
 	auto end = steady_clock::now();
 	auto elapsed = duration_cast<milliseconds>(end - start);
 	test_time_cr = elapsed.count();
@@ -1020,36 +1022,83 @@ void CSignalsDlg::OnBnClickedButton13() //Correlation_omp button
 	UpdateData(FALSE);
 }
 
-//Безразмерный критерий от уровня шума
+////Безразмерный критерий от уровня шума
+//void CSignalsDlg::OnBnClickedButton14()
+//{
+//	UpdateData(TRUE);
+//	SetCursor(LoadCursor(nullptr, IDC_WAIT));
+//	updateSP();
+//
+//	vector<double> study1;
+//	//vector<double> study2;
+//	double noize_min_r = -15;
+//	double noize_max_r = 0;
+//	int noize_dots_r = 15;
+//	double noize_step_r = (noize_max_r - noize_min_r) / (noize_dots_r - 1);
+//	study1.resize(noize_dots_r);
+//	//study2.resize(noize_dots_r);
+//	int try_size = 2;
+//	for (int i = 0; i < noize_dots_r; i++)
+//	{
+//		double noize_r = noize_min_r + i * noize_step_r;
+//		for (int j = 0; j < try_size; j++)
+//		{
+//			Signals_Gen(bits_size, bits_size / 10, noize_r);
+//			int found_delay;
+//			int win_size = sampling / bitrate;
+//			double pi = sp.Correlation_omp_jtids_with_nl_filtering(delay_size, ImSignal1, ImSignal2, ResearchRrr, found_delay, delay_lama,win_size);
+//			study1[i] += pi;
+//			//pi = sp.Uncertainty_ipp_jtids(delay_size, ImSignal1, ImSignal2, _k, ResearchRrr, found_delay, delay_lama,win_size);
+//			//study2[i] += pi;
+//		}
+//		study1[i] /= try_size;
+//		//study2[i] /= try_size;
+//	}
+//	TVD_vec.clear();
+//	TVD_vec.resize(1);
+//	TVD_vec[0] = study1;
+//	//TVD_vec[1] = study2;
+//	TrueViewerDraw(TVD_vec, noize_min_r, noize_max_r, viewer3, "study1.png", true);
+//	SetCursor(LoadCursor(nullptr, IDC_ARROW));
+//	UpdateData(0);
+//}
+//Безразмерный критерий от длины окна
 void CSignalsDlg::OnBnClickedButton14()
 {
 	UpdateData(TRUE);
 	SetCursor(LoadCursor(nullptr, IDC_WAIT));
 	updateSP();
 
-	vector<double> study;
-	double noize_min_r = -15;
-	double noize_max_r = -5;
-	int noize_dots_r = 10;
-	double noize_step_r = (noize_max_r - noize_min_r) / (noize_dots_r - 1);
-	study.resize(noize_dots_r);
+	vector<double> study1;
+	//vector<double> study2;
+	int win_size = sampling / bitrate;
+	int win_size_min= 1;
+	int win_size_max = 30;
+	int win_size_dots_r = 30;
+	int win_size_step_r = (win_size_max - win_size_min) / (win_size_dots_r - 1);
+	study1.resize(win_size_dots_r);
+	//study2.resize(noize_dots_r);
 	int try_size = 5;
-	for (int i = 0; i < noize_dots_r; i++)
+	for (int i = 0; i < win_size_dots_r; i++)
 	{
-		double noize_r = noize_min_r + i * noize_step_r;
+		int win_size_r = win_size_min + i * win_size_step_r;
 		for (int j = 0; j < try_size; j++)
 		{
-			Signals_Gen(bits_size, bits_size / 10, noize_r);
+			Signals_Gen(bits_size, bits_size / 10, noize_lvl);
 			int found_delay;
-			double pi = sp.Correlation_omp_jtids_with_nl_filtering(delay_size, ImSignal1, ImSignal2, ResearchRrr, found_delay, delay_lama);
-			study[i] += pi;
+			double pi = sp.Correlation_omp_jtids_with_nl_filtering(delay_size, ImSignal1, ImSignal2, ResearchRrr, found_delay, delay_lama, win_size_r);
+			study1[i] += pi;
+			//pi = sp.Uncertainty_ipp_jtids(delay_size, ImSignal1, ImSignal2, _k, ResearchRrr, found_delay, delay_lama);
+			//study2[i] += pi;
 		}
-		study[i] /= try_size;
+		study1[i] /= try_size;
+		//study2[i] /= try_size;
 	}
 	TVD_vec.clear();
 	TVD_vec.resize(1);
-	TVD_vec[0] = study;
-	TrueViewerDraw(TVD_vec, noize_min_r, noize_max_r, viewer3, "study1.png", true);
+	TVD_vec[0] = study1;
+	//TVD_vec[1] = study2;
+	TrueViewerDraw(TVD_vec, win_size_min, win_size_max, viewer3, "study1.png", true);
 	SetCursor(LoadCursor(nullptr, IDC_ARROW));
 	UpdateData(0);
 }

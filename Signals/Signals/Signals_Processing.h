@@ -125,7 +125,7 @@ public:
 	*/
 	double Correlation_omp_jtids_with_nl_filtering(int delay_size, const vector<complex<double>>& ImSignal1, \
 		const  vector<complex<double>>& ImSignal2, \
-		vector <double>& ResearchRrr, int& found_delay, int& delay_lama);
+		vector <double>& ResearchRrr, int& found_delay, int& delay_lama, int win_size);
 
 
 	void Dopler(vector <complex<double>>& Signal, double shift, double center_frequency);
@@ -178,12 +178,14 @@ public:
 		const vector<vector<complex<double>>>& v2, vector<vector<complex<double>>>& v3);
 	void transpose_conj(vector<vector<complex<double>>>& v1);
 	int pre_nonlinear_filtering(double f0, double sampling, double bitrate,\
-		vector<vector<complex<double>>> &AA);
+		vector<vector<complex<double>>> &AA, int win_size);
 	int nonlinear_filtering(vector<complex<double>>& signal, double f0, double sampling, double bitrate,\
-		const vector<vector<complex<double>>>& AA);
+		const vector<vector<complex<double>>>& AA, int win_size);
 	int nonlinear_filtering(signal_buf& signal, double f0, double sampling, double bitrate,\
-		const vector<vector<complex<double>>>& AA);
+		const vector<vector<complex<double>>>& AA, int win_size);
 	void vec_to_2dvec(const vector<complex<double>>& v1, vector<vector<complex<double>>>& v2);
+
+	map<int, vector<vector<complex<double>>>> AAA;
 	//////////////////////////////////////////////
 	template <typename T>
 	void vec_normalize(vector<T>& v)

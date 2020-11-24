@@ -1405,7 +1405,7 @@ double Signals_Processing::peak_intensity(vector<double> mas)
 
 double Signals_Processing::Correlation_omp_jtids_with_nl_filtering(int delay_size, const vector<complex<double>>& ImSignal1, \
 	const  vector<complex<double>>& ImSignal2, \
-	vector <double>& ResearchRrr, int& found_delay, int& delay_lama)
+	vector <double>& ResearchRrr, int& found_delay, int& delay_lama, int win_size)
 {
 	//////////////////// Подготовка входных сигналов
 	signal_buf signal1; signal1.resize(ImSignal1.size());
@@ -1427,9 +1427,9 @@ double Signals_Processing::Correlation_omp_jtids_with_nl_filtering(int delay_siz
 	for (int i = 0; i < this->operating_frequencies.size(); i++)
 	{
 		vector<vector<complex<double>>> AA;
-		this->pre_nonlinear_filtering(operating_frequencies[i] * 1e6, this->sampling, this->BrV, AA);
-		this->nonlinear_filtering(this->FHSS_Signals_initial_fl[i], operating_frequencies[i] * 1e6, this->sampling, this->BrV,AA);
-		this->nonlinear_filtering(this->FHSS_Signals_fl[i], operating_frequencies[i] * 1e6, this->sampling, this->BrV,AA);
+		this->pre_nonlinear_filtering(operating_frequencies[i] * 1e6, this->sampling, this->BrV, AA, win_size);
+		this->nonlinear_filtering(this->FHSS_Signals_initial_fl[i], operating_frequencies[i] * 1e6, this->sampling, this->BrV,AA, win_size);
+		this->nonlinear_filtering(this->FHSS_Signals_fl[i], operating_frequencies[i] * 1e6, this->sampling, this->BrV,AA, win_size);
 	}
 	ResearchRrr.clear();
 	ResearchRrr.resize(this->FHSS_Signals_initial_fl[0].size());
